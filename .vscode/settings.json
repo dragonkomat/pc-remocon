@@ -1,0 +1,6 @@
+{
+    "cmake.sourceDirectory": "${workspaceRoot}\\cmake\\pc-remocon\\default",
+    "mplab.clangd.arguments": [
+        "--compile-commands-dir=${workspaceRoot}\\_build\\pc-remocon\\default"
+    ]
+}

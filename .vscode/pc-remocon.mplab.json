@@ -1,0 +1,47 @@
+{
+    "version": "1.4",
+    "configurations": [
+        {
+            "name": "default",
+            "id": "",
+            "device": "PIC16F18424",
+            "imageType": "application",
+            "imagePath": "./out/pc-remocon/default.elf",
+            "toolProperties": "default-tool-base",
+            "tool": "Snap",
+            "packs": [
+                {
+                    "name": "PIC16F1xxxx_DFP",
+                    "vendor": "Microchip",
+                    "version": "1.26.410"
+                }
+            ],
+            "fileSet": "default",
+            "toolchain": "default-XC8"
+        }
+    ],
+    "propertyGroups": [
+        {
+            "name": "default-XC8",
+            "type": "toolchain",
+            "provider": "microchip.toolchains:xc8@3.00",
+            "properties": {}
+        },
+        {
+            "name": "default-tool-base",
+            "type": "tool",
+            "properties": {}
+        }
+    ],
+    "fileSets": [
+        {
+            "name": "default",
+            "files": [
+                {
+                    "include": "**/*",
+                    "exclude": "**/(_build|out|cmake|.vscode)/**/*"
+                }
+            ]
+        }
+    ]
+}

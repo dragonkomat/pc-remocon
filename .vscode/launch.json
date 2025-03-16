@@ -1,0 +1,15 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Launch pc-remocon: default",
+            "type": "mplab-core-da",
+            "request": "launch",
+            "project": "pc-remocon",
+            "configuration": "default",
+            "tool": "${command:pickTool}",
+            "stopOnEntry": true,
+            "preLaunchTask": "pc-remocon: default - Full Build"
+        }
+    ]
+}
