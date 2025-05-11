@@ -24,42 +24,31 @@
 
 #include "common.h"
 
-#include <stdio.h>
+#include "pins.h"
 
-#include "console.h"
-
-void console_rx_isr()
+void pins_init()
 {
-    if(RC1STAbits.OERR)
-    {
-    }  
-    if(RC1STAbits.FERR)
-    {
-    } 
-    
-    char rxdata = RC1REG;
-    LATCbits.LATC3 = rxdata & 0x01;
-}
+    // RC3: LED (OUT)
+    ANSELCbits.ANSC3 = 0;
+    LATCbits.LATC3 = 0;
+    TRISCbits.TRISC3 = 0;
 
-void console_init()
-{
-    PIE3bits.RC1IE = 0;
-    BAUD1CON = 0x08;    // (ABDOVF=0), (RCIDL=0), (0), SCKP=0, BRG16=1, (0), WUE=0, ABDEN=0
-    RC1STA   = 0x90;    // SPEN=1, RX9=0, SREN=0, CREN=1, ADDEN=0, (FERR=0), OERR=0, RX9D=0
-    TX1STA   = 0x24;    // CSRC=0, TX9=0, TXEN=1, SYNC=0, SENDB=0, BRGH=1, (TRMT=0), TX9D=0
-    SP1BRGL  = 0x44;    // Fosc=32MHz, (SYNC=x, BRGH=1, BRG16=1 ... x4), SP1BRG=0x0044 ... 115.2kbps
-    SP1BRGH  = 0x0;
-    PIR3bits.RC1IF = 0;
-    PIE3bits.RC1IE = 1;
-}
+    // RC4: LED (OUT)
+    ANSELCbits.ANSC4 = 0;
+    LATCbits.LATC4 = 0;
+    TRISCbits.TRISC4 = 0;
 
-int getch(void)
-{
-    return 0;
-}
+    // RA4: EUSART RX1 (IN)
+    ANSELAbits.ANSA4 = 0;
+    RX1PPS = 0x4;
+    // RC2: EUSART TX1 (OUT)
+    ANSELCbits.ANSC2 = 0;
+    RC2PPS = 0x0F;  // CK1/TX1
 
-void putch(char txData)
-{
-    while(!(PIR3bits.TX1IF && TX1STAbits.TXEN));
-    TX1REG = txData;
+    // RA5: BUZZER (OUT)
+    ANSELAbits.ANSA5 = 0;
+    LATAbits.LATA5 = 0;
+    TRISAbits.TRISA5 = 0;
+    RA5PPS = 0x18;  // NCO1OUT
+
 }

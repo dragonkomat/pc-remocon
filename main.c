@@ -22,12 +22,14 @@
     SOFTWARE.
 */
 
-#include <xc.h>
-#include <pic16f18424.h>
+#include "common.h"
 
 #include <stdio.h>
 
 #include "console.h"
+#include "buzzer.h"
+#include "interrupts.h"
+#include "pins.h"
 
 //CONFIG1
 #pragma config FCMEN = ON
@@ -66,48 +68,14 @@
 //CONFIG5
 #pragma config CP = OFF
 
-void __interrupt() isr()
-{
-    if(INTCONbits.PEIE == 1)
-    {
-        if(PIE3bits.RC1IE == 1 && PIR3bits.RC1IF == 1)
-        {
-            console_rx_isr();
-        }
-        else
-        {
-        }
-    }      
-    else
-    {
-    }
-}
-
 void init()
 {
-    // RC3: LED (OUT)
-    ANSELCbits.ANSC3 = 0;
-    TRISCbits.TRISC3 = 0;
-    LATCbits.LATC3 = 0;
-
-    // RC4: LED (OUT)
-    ANSELCbits.ANSC4 = 0;
-    TRISCbits.TRISC4 = 0;
-    LATCbits.LATC4 = 0;
-
-    // RA4: EUSART RX1 (IN)
-    ANSELAbits.ANSA4 = 0;
-    RX1PPS = 0x4;
-    // RC2: EUSART TX1 (OUT)
-    ANSELCbits.ANSC2 = 0;
-    RC2PPS = 0x0F;
+    pins_init();
 
     console_init();
+    buzzer_init();
 
-    PIR0bits.INTF = 0;
-    INTCONbits.INTEDG = 1;
-    INTCONbits.PEIE = 1;
-    INTCONbits.GIE = 1;
+    interrupts_init();
 }
 
 int main()
@@ -115,6 +83,12 @@ int main()
     init();
 
     printf("Hi!");
+
+    buzzer_on(0x1062);
+    __delay_ms(100);
+    buzzer_on(0x20C4);
+    __delay_ms(100);
+    buzzer_off();
 
     //LATCbits.LATC3 = 1;
     LATCbits.LATC4 = 1;
