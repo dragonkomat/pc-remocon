@@ -23,7 +23,6 @@
 */
 
 #include "common.h"
-
 #include "buzzer.h"
 
 void buzzer_init()

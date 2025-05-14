@@ -23,7 +23,6 @@
 */
 
 #include "common.h"
-
 #include "pins.h"
 
 void pins_init()
@@ -40,7 +39,7 @@ void pins_init()
 
     // RA4: EUSART RX1 (IN)
     ANSELAbits.ANSA4 = 0;
-    RX1PPS = 0x4;
+    RX1PPS = 0x04;  // RA4
     // RC2: EUSART TX1 (OUT)
     ANSELCbits.ANSC2 = 0;
     RC2PPS = 0x0F;  // CK1/TX1
@@ -51,4 +50,8 @@ void pins_init()
     TRISAbits.TRISA5 = 0;
     RA5PPS = 0x18;  // NCO1OUT
 
+    // RC5: IR receiver (IN)
+    ANSELCbits.ANSC5 = 0;
+    TRISCbits.TRISC5 = 1;
+    SMT1SIGPPS = 0x15;  // RC5
 }

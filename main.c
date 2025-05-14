@@ -23,13 +23,13 @@
 */
 
 #include "common.h"
-
-#include <stdio.h>
-
 #include "console.h"
 #include "buzzer.h"
 #include "interrupts.h"
+#include "ir_receiver.h"
 #include "pins.h"
+
+#include <stdio.h>
 
 //CONFIG1
 #pragma config FCMEN = ON
@@ -74,6 +74,7 @@ void init()
 
     console_init();
     buzzer_init();
+    ir_receiver_init();
 
     interrupts_init();
 }
