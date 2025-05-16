@@ -26,72 +26,157 @@
 #include "ir_receiver.h"
 
 #define SMTCLK  500E+3  // MFINTOSC(500kHz), 1:1
-#define T       562E-6  // NECフォーマット
-#define T_COUNT(t)  ((int)(T * t / (1.0 / SMTCLK)))
 
-#define TIMEOUT_COUNT       T_COUNT(20)
-#define PREAMBLE1_COUNT_H   T_COUNT(16 * 1.1)
-#define PREAMBLE1_COUNT_L   T_COUNT(16 * 0.9)
-#define PREAMBLE2_COUNT_H   T_COUNT(8 * 1.1)
-#define PREAMBLE2_COUNT_L   T_COUNT(8 * 0.9)
+#define T_NEC       562E-6  // NECフォーマット ... T=562us
+#define T_AEHA      425E-6  // 家製協フォーマット ... T=425us
+
+#define T_COUNT(T, C)   ((int)(T * C / (1.0 / SMTCLK)))
+
+#define TIMEOUT_COUNT   T_COUNT(T_NEC, 20)
 
 typedef enum {
-    IR_RECEIVER_STATE_IDLE,
-    IR_RECEIVER_STATE_PREAMBLE,
-    IR_RECEIVER_STATE_DATA
-} ir_receiver_state_t;
+    IRR_STATE_IDLE,
+    IRR_STATE_PREAMBLE,
+    IRR_STATE_DATA
+} irr_state_t;
 
-ir_receiver_state_t ir_receiver_state = IR_RECEIVER_STATE_IDLE;
+typedef enum {
+    IRR_TYPE_NEC,
+    IRR_TYPE_AEHA,
+    IRR_TYPE_SONY
+} irr_type_t;
 
-int ir_receiver_pwa_count = 0;
-int ir_receiver_pra_count = 0;
-int ir_receiver_cpwa[4];
-int ir_receiver_cpra[4];
+typedef struct {
+    int min;
+    int max;
+} irr_minmax_t;
 
-int ir_receiver_cpw = 0;
-int ir_receiver_cpr = 0;
+typedef struct {
+    irr_minmax_t start_h;
+    irr_minmax_t start_l;
+    irr_minmax_t datax_h;
+    irr_minmax_t data0_l;
+    irr_minmax_t data1_l;
+} irr_param_t;
+
+const irr_param_t irr_params[] = {
+    [IRR_TYPE_NEC] = {
+       .start_h = { 
+            T_COUNT(T_NEC, 16 * 0.9),
+            T_COUNT(T_NEC, 16 * 1.1)
+        },
+       .start_l = {
+            T_COUNT(T_NEC, 8 * 0.9),
+            T_COUNT(T_NEC, 8 * 1.1)
+        },
+       .datax_h = {
+            T_COUNT(T_NEC, 1 * 0.9),
+            T_COUNT(T_NEC, 1 * 1.1)
+        },
+       .data0_l = {
+            T_COUNT(T_NEC, 1 * 0.9),
+            T_COUNT(T_NEC, 1 * 1.1)
+        },
+       .data1_l = {
+            T_COUNT(T_NEC, 3 * 0.9),
+            T_COUNT(T_NEC, 3 * 1.1)
+        }
+    },
+    [IRR_TYPE_AEHA] = {
+       .start_h = { 
+            T_COUNT(T_AEHA, 8 * 0.9),
+            T_COUNT(T_AEHA, 8 * 1.1)
+        },
+       .start_l = {
+            T_COUNT(T_AEHA, 4 * 0.9),
+            T_COUNT(T_AEHA, 4 * 1.1)
+        },
+       .datax_h = {
+            T_COUNT(T_AEHA, 1 * 0.9),
+            T_COUNT(T_AEHA, 1 * 1.1)
+        },
+       .data0_l = {
+            T_COUNT(T_AEHA, 1 * 0.9),
+            T_COUNT(T_AEHA, 1 * 1.1)
+        },
+       .data1_l = {
+            T_COUNT(T_AEHA, 3 * 0.9),
+            T_COUNT(T_AEHA, 3 * 1.1)
+        }
+    }
+};
+#define PARAMS irr_params
+
+typedef struct {
+    irr_state_t state;
+    int         width_h;
+    int         width_l;
+    irr_type_t  type;
+} irr_data_t;
+
+irr_data_t irr_data = {
+    .state = IRR_STATE_IDLE,
+    .width_h = 0,
+    .width_l = 0,
+    .type = IRR_TYPE_NEC
+};
+#define DATA irr_data
 
 void ir_receiver_pwa_isr()
 {
-    ir_receiver_cpw = SMT1CPWH << 8 | SMT1CPWL;
-    switch(ir_receiver_state)
+    DATA.width_h = SMT1CPWH << 8 | SMT1CPWL;
+    switch( DATA.state )
     {
-        case IR_RECEIVER_STATE_IDLE:
-            if( ir_receiver_cpw >= PREAMBLE1_COUNT_L && ir_receiver_cpw <= PREAMBLE1_COUNT_H )
+        case IRR_STATE_IDLE:
+            if(    DATA.width_h >= PARAMS[IRR_TYPE_NEC].start_h.min
+                && DATA.width_h <= PARAMS[IRR_TYPE_NEC].start_h.max )
             {
-                ir_receiver_state = IR_RECEIVER_STATE_PREAMBLE;
+                DATA.type = IRR_TYPE_NEC;
+                DATA.state = IRR_STATE_PREAMBLE;
+                LATCbits.LATC3 = 1;
             }
+            else if(    DATA.width_h >= PARAMS[IRR_TYPE_AEHA].start_h.min
+                     && DATA.width_h <= PARAMS[IRR_TYPE_AEHA].start_h.max )
+            {
+                DATA.type = IRR_TYPE_AEHA;
+                DATA.state = IRR_STATE_PREAMBLE;
+                LATCbits.LATC3 = 1;
+            }
+            break;
+        case IRR_STATE_DATA:
             break;
         default:
             break;
     }
-    if( ir_receiver_pwa_count < 4)
-        ir_receiver_cpwa[ir_receiver_pwa_count++] = ir_receiver_cpw;
 }
 
 void ir_receiver_pra_isr()
 {
-    ir_receiver_cpr = SMT1CPRH << 8 | SMT1CPRL;
-    switch(ir_receiver_state)
+    DATA.width_l = SMT1CPRH << 8 | SMT1CPRL;
+    switch( DATA.state )
     {
-        case IR_RECEIVER_STATE_PREAMBLE:
-            if( ir_receiver_cpr >= PREAMBLE2_COUNT_L && ir_receiver_cpr <= PREAMBLE2_COUNT_H )
+        case IRR_STATE_PREAMBLE:
+            if(    DATA.width_l >= PARAMS[DATA.type].start_l.min
+                && DATA.width_l <= PARAMS[DATA.type].start_l.max )
             {
-                ir_receiver_state = IR_RECEIVER_STATE_DATA;
-                LATCbits.LATC3 = 1;
+                DATA.state = IRR_STATE_DATA;
             }
+            break;
+        case IRR_STATE_DATA:
             break;
         default:
             break;
     }
-    if( ir_receiver_pra_count < 4)
-        ir_receiver_cpra[ir_receiver_pra_count++] = ir_receiver_cpr;
 }
 
 void ir_receiver_isr()
 {
-    ir_receiver_state = IR_RECEIVER_STATE_IDLE;
-    //SMT1CON1bits.GO = 0;
+    SMT1CON1bits.GO = 0;
+    SMT1STAT = 0xD0;    // CPRUP=CPWUP=RST=1
+    while((SMT1STAT & 0xD0) != 0);
+    SMT1CON1bits.GO = 1;
+
+    DATA.state = IRR_STATE_IDLE;
     LATCbits.LATC3 = 0;
 }
 
