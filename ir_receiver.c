@@ -34,6 +34,8 @@
 
 #define TIMEOUT_COUNT   T_COUNT(T_NEC, 20)
 
+#define DATA_MAXLEN 16
+
 typedef enum {
     IRR_STATE_IDLE,
     IRR_STATE_PREAMBLE,
@@ -109,16 +111,27 @@ const irr_param_t irr_params[] = {
 
 typedef struct {
     irr_state_t state;
+    irr_type_t  type;
     int         width_h;
     int         width_l;
-    irr_type_t  type;
+    char        work_bitpos;
+    char        work_byte;
+    char        work_length;
+    char        work[DATA_MAXLEN];
+    char        data_length;
+    char        data[DATA_MAXLEN];
 } irr_data_t;
 
 irr_data_t irr_data = {
     .state = IRR_STATE_IDLE,
+    .type = IRR_TYPE_NEC,
     .width_h = 0,
     .width_l = 0,
-    .type = IRR_TYPE_NEC
+    .work_bitpos = 0,
+    .work_length = 0,
+    .work = {0},
+    .data_length = 0,
+    .data = {0}
 };
 #define DATA irr_data
 
@@ -171,11 +184,6 @@ void ir_receiver_pra_isr()
 
 void ir_receiver_isr()
 {
-    SMT1CON1bits.GO = 0;
-    SMT1STAT = 0xD0;    // CPRUP=CPWUP=RST=1
-    while((SMT1STAT & 0xD0) != 0);
-    SMT1CON1bits.GO = 1;
-
     DATA.state = IRR_STATE_IDLE;
     LATCbits.LATC3 = 0;
 }
