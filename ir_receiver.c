@@ -128,6 +128,7 @@ irr_data_t irr_data = {
     .width_h = 0,
     .width_l = 0,
     .work_bitpos = 0,
+    .work_byte = 0,
     .work_length = 0,
     .work = {0},
     .data_length = 0,

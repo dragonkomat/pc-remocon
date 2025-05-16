@@ -54,4 +54,5 @@ void pins_init()
     ANSELCbits.ANSC5 = 0;
     TRISCbits.TRISC5 = 1;
     SMT1SIGPPS = 0x15;  // RC5
+    // 負論理の場合はSMT1CON0のSPOLビットを1にする
 }
