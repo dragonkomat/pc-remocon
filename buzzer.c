@@ -31,14 +31,14 @@ void buzzer_init(void)
     NCO1CLK = 0x03; // PWS=000, (0), CKS=0011
 }
 
-void buzzer_on(unsigned short freq)
+void buzzer_on(unsigned int cnt)
 {
     NCO1CONbits.EN = 0;
     NCO1ACCU = 0;
     NCO1ACCH = 0;
     NCO1ACCL = 0;
-    NCO1INCH = freq >> 8;
-    NCO1INCL = freq & 0xFF;
+    NCO1INCH = cnt >> 8;
+    NCO1INCL = cnt & 0xFF;
     NCO1CONbits.EN = 1;
 }
 

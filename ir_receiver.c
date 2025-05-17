@@ -30,7 +30,7 @@
 #define T_NEC       562E-6  // NECフォーマット ... T=562us
 #define T_AEHA      425E-6  // 家製協フォーマット ... T=425us
 
-#define T_COUNT(T, C)   ((int)(T * C / (1.0 / SMTCLK)))
+#define T_COUNT(T, C)   ((int)(((double)(T)) * (C) / (1.0 / SMTCLK))) // T, Cは定数で指定
 
 #define TIMEOUT_COUNT   T_COUNT(T_NEC, 20)
 

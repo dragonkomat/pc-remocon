@@ -85,9 +85,9 @@ int main()
 
     printf("Hi!");
 
-    buzzer_on(0x1062);
+    buzzer_on(BZR_FREQ2CNT(2000));
     __delay_ms(100);
-    buzzer_on(0x20C4);
+    buzzer_on(BZR_FREQ2CNT(1000));
     __delay_ms(100);
     buzzer_off();
 
