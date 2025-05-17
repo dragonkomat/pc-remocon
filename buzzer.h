@@ -30,6 +30,6 @@ void buzzer_on(unsigned int cnt);
 void buzzer_off(void);
 
 #define BZR_NCOCLK      500E3   // 500KHz, PFM=0
-#define BZR_FREQ2CNT(F) ((unsigned int)((((double)(F)) / BZR_NCOCLK) * (1L << 20) * 2)) // Fは定数で指定
+#define BZR_FREQ2CNT(F) ((unsigned int)((((double)(F)) / BZR_NCOCLK) * (1L << 20) * 2)) // 引数は定数で指定
 
 #endif // _PC_REMOCON_BUZZER_H_
