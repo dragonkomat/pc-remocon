@@ -27,7 +27,7 @@
 
 #include <stdio.h>
 
-void console_rx_isr()
+void console_rx_isr(void)
 {
     if(RC1STAbits.OERR)
     {
@@ -40,7 +40,7 @@ void console_rx_isr()
     //LATCbits.LATC3 = rxdata & 0x01;
 }
 
-void console_init()
+void console_init(void)
 {
     PIE3bits.RC1IE = 0;
     BAUD1CON = 0x08;    // (ABDOVF=0), (RCIDL=0), (0), SCKP=0, BRG16=1, (0), WUE=0, ABDEN=0
@@ -52,10 +52,10 @@ void console_init()
     PIE3bits.RC1IE = 1;
 }
 
-int getch(void)
-{
-    return 0;
-}
+// int getch(void)
+// {
+//     return 0;
+// }
 
 void putch(char txData)
 {

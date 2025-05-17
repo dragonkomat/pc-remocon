@@ -25,7 +25,7 @@
 #include "common.h"
 #include "pins.h"
 
-void pins_init()
+void pins_init(void)
 {
     // RC3: LED (OUT)
     ANSELCbits.ANSC3 = 0;

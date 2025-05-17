@@ -136,7 +136,7 @@ irr_data_t irr_data = {
 };
 #define DATA irr_data
 
-void ir_receiver_pwa_isr()
+void ir_receiver_pwa_isr(void)
 {
     DATA.width_h = SMT1CPWH << 8 | SMT1CPWL;
     switch( DATA.state )
@@ -164,7 +164,7 @@ void ir_receiver_pwa_isr()
     }
 }
 
-void ir_receiver_pra_isr()
+void ir_receiver_pra_isr(void)
 {
     DATA.width_l = SMT1CPRH << 8 | SMT1CPRL;
     switch( DATA.state )
@@ -183,13 +183,13 @@ void ir_receiver_pra_isr()
     }
 }
 
-void ir_receiver_isr()
+void ir_receiver_isr(void)
 {
     DATA.state = IRR_STATE_IDLE;
     LATCbits.LATC3 = 0;
 }
 
-void ir_receiver_init()
+void ir_receiver_init(void)
 {
     SMT1CON0 = 0x08;    // EN=0, (0), STP=0, WPOL=0, SPOL=1, CPOL=0, PS=00 ... 1:1
     SMT1CON1 = 0x43;    // GO=0, REPEAT=1, (0), (0), MODE=0011 (High and Low Measurement Mode)

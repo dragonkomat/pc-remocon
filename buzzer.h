@@ -25,8 +25,8 @@
 #ifndef _PC_REMOCON_BUZZER_H_
 #define _PC_REMOCON_BUZZER_H_
 
-void buzzer_init();
+void buzzer_init(void);
 void buzzer_on(unsigned short freq);
-void buzzer_off();
+void buzzer_off(void);
 
 #endif // _PC_REMOCON_BUZZER_H_

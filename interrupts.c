@@ -27,7 +27,7 @@
 #include "console.h"
 #include "ir_receiver.h"
 
-void __interrupt() isr()
+void __interrupt() isr(void)
 {
     if(INTCONbits.PEIE == 1)
     {
@@ -56,7 +56,7 @@ void __interrupt() isr()
     }      
 }
 
-void interrupts_init()
+void interrupts_init(void)
 {
     PIR0bits.INTF = 0;
     INTCONbits.INTEDG = 1;

@@ -25,6 +25,6 @@
 #ifndef _PC_REMOCON_INTERRUPTS_H_
 #define _PC_REMOCON_INTERRUPTS_H_
 
-void interrupts_init();
+void interrupts_init(void);
 
 #endif // _PC_REMOCON_INTERRUPTS_H_

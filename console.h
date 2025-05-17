@@ -25,7 +25,7 @@
 #ifndef _PC_REMOCON_CONSOLE_H_
 #define _PC_REMOCON_CONSOLE_H_
 
-void console_init();
-void console_rx_isr();
+void console_init(void);
+void console_rx_isr(void);
 
 #endif  //_PC_REMOCON_CONSOLE_H_

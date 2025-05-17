@@ -25,7 +25,7 @@
 #include "common.h"
 #include "buzzer.h"
 
-void buzzer_init()
+void buzzer_init(void)
 {
     NCO1CON = 0x00; // EN=0, (0), OUT=0, POL=0, (0), (0), (0), PFM=0
     NCO1CLK = 0x03; // PWS=000, (0), CKS=0011
@@ -42,7 +42,7 @@ void buzzer_on(unsigned short freq)
     NCO1CONbits.EN = 1;
 }
 
-void buzzer_off()
+void buzzer_off(void)
 {
     NCO1CONbits.EN = 0;
 }
