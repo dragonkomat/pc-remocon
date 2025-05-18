@@ -26,8 +26,8 @@
 #include "main.h"
 #include "ir_receiver.h"
 
-//#define IRR_DEBUG   1   // デバッグ
 #define IRR_DUMP    1   // 受信結果のダンプ
+//#define IRR_DEBUG   1   // デバッグ: 信号受信の代わりにH/L期間を記録する
 
 #ifdef IRR_DUMP
 #include <stdio.h>
@@ -393,8 +393,7 @@ void ir_receiver_isr(void)
     DATA.state = IRR_STATE_IDLE;
 
 #else   // IRR_DEBUG
-    DATA.debug_l_length = 0;
-    DATA.debug_h_length = 0;
+    COMMON.received = 1;
 #endif  // IRR_DEBUG
 
     SMT1CON1bits.GO = 0;
@@ -409,6 +408,10 @@ void ir_receiver_isr(void)
 
 void ir_receiver_tmr_isr(void)
 {
+#ifdef IRR_DEBUG
+    DATA.debug_l_length = 0;
+    DATA.debug_h_length = 0;
+#endif  // IRR_DEBUG
     DATA.received = 0;
     LED2 = 0;
 }
@@ -416,9 +419,9 @@ void ir_receiver_tmr_isr(void)
 void ir_receiver_dump(void)
 {
 #ifdef IRR_DUMP
+#ifndef IRR_DEBUG
     char i;
     char *t;
-
     switch( DATA.data_type )
     {
     case IRR_TYPE_NEC:
@@ -445,6 +448,39 @@ void ir_receiver_dump(void)
         printf("%02X ",DATA.data[i]);
     }
     printf("\r\n");
+#else  // IRR_DEBUG
+    char i;
+
+    printf("=== Data received ===\r\n");
+    for( i=0; i<DATA_MAXLEN_DEBUG; i++ )
+    {
+        if( i < DATA.debug_h_length || i < DATA.debug_l_length )
+        {
+            printf("%02X: ", i);
+            if( i < DATA.debug_h_length )
+            {
+                printf("%04X ", DATA.debug_h[i]);
+            }
+            else
+            {
+                printf("---- ");
+            }
+            if( i < DATA.debug_l_length )
+            {
+                printf("%04X ", DATA.debug_l[i]);
+            }
+            else
+            {
+                printf("---- ");
+            }
+            printf("\r\n");
+        }
+        else
+        {
+            break;
+        }
+    }
+#endif  // IRR_DEBUG
 #endif  // IRR_DUMP
 }
 
