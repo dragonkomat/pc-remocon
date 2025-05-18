@@ -31,6 +31,12 @@ void __interrupt() isr(void)
 {
     if(INTCONbits.PEIE == 1)
     {
+        if(PIE4bits.TMR6IE == 1 && PIR4bits.TMR6IF == 1)
+        {
+            PIR4bits.TMR6IF = 0;
+            ir_receiver_tmr_isr();
+        }
+
         if(PIE8bits.SMT1PWAIE == 1 && PIR8bits.SMT1PWAIF == 1)
         {
             PIR8bits.SMT1PWAIF = 0;
