@@ -32,21 +32,14 @@
 #define T_NEC               562E-6  // NECフォーマット ... T=562us
 #define T_AEHA              425E-6  // 家製協フォーマット ... T=425us
 
-#define T_COEFF_MIN_NEC         0.9
-#define T_COEFF_MAX_NEC         1.1
-#define DATAX_CNT_H_ADJUST_NEC  +0x18   // NECフォーマットのDATAのパルス幅補正(H側)
-#define DATAX_CNT_L_ADJUST_NEC  -0x30   // NECフォーマットのDATAのパルス幅補正(L側)
-
-#define T_COEFF_MIN_AEHA        0.8
-#define T_COEFF_MAX_AEHA        1.2
-#define DATAX_CNT_H_ADJUST_AEHA +0x00   // 家製協フォーマットのDATAのパルス幅補正(H側)
-#define DATAX_CNT_L_ADJUST_AEHA -0x10   // 家製協フォーマットのDATAのパルス幅補正(L側)
+#define T_LEADER_COEFF_MIN  0.9
+#define T_LEADER_COEFF_MAX  1.1
 
 #define DATA_MAXLEN 16
 
-#define T_COUNT(T, C, ADJ)   ((int)((((double)(T)) * (C) / (1.0 / SMTCLK)) + (ADJ)))  // 引数は定数で指定
+#define T_COUNT(T, C)   ((int)(((double)(T)) * (C) / (1.0 / SMTCLK)))   // 引数は定数で指定
 
-#define TIMEOUT_COUNT   T_COUNT(T_NEC, 20, 0)
+#define TIMEOUT_COUNT   T_COUNT(T_NEC, 20)
 
 typedef enum {
     IRR_STATE_IDLE,
@@ -81,64 +74,53 @@ typedef struct {
 typedef struct {
     irr_minmax_t leader_h;
     irr_minmax_t leader_l;
-    irr_minmax_t datax_h;
-    irr_minmax_t data0_l;
-    irr_minmax_t data1_l;
+    irr_minmax_t data_th_h;
+    irr_minmax_t data_th_l;
 } irr_param_t;
 
 const irr_param_t irr_params[] = {
     [IRR_TYPE_NEC] = {
        .leader_h = { 
-            .min = T_COUNT(T_NEC, 16 * T_COEFF_MIN_NEC, 0),
-            .typ = T_COUNT(T_NEC, 16                  , 0),
-            .max = T_COUNT(T_NEC, 16 * T_COEFF_MAX_NEC, 0)
+            .min = T_COUNT(T_NEC, 16 * T_LEADER_COEFF_MIN),
+            .typ = T_COUNT(T_NEC, 16                     ),
+            .max = T_COUNT(T_NEC, 16 * T_LEADER_COEFF_MAX)
         },
        .leader_l = {
-            .min = T_COUNT(T_NEC, 8 * T_COEFF_MIN_NEC, 0),
-            .typ = T_COUNT(T_NEC, 8                  , 0),
-            .max = T_COUNT(T_NEC, 8 * T_COEFF_MAX_NEC, 0)
+            .min = T_COUNT(T_NEC, 8 * T_LEADER_COEFF_MIN),
+            .typ = T_COUNT(T_NEC, 8                     ),
+            .max = T_COUNT(T_NEC, 8 * T_LEADER_COEFF_MAX)
         },
-       .datax_h = {
-            .min = T_COUNT(T_NEC, 1 * T_COEFF_MIN_NEC, DATAX_CNT_H_ADJUST_NEC),
-            .typ = T_COUNT(T_NEC, 1                  , DATAX_CNT_H_ADJUST_NEC),
-            .max = T_COUNT(T_NEC, 1 * T_COEFF_MAX_NEC, DATAX_CNT_H_ADJUST_NEC)
+       .data_th_h = {
+            .min = 0,
+            .typ = T_COUNT(T_NEC, 2                     ),
+            .max = T_COUNT(T_NEC, 4                     )
         },
-       .data0_l = {
-            .min = T_COUNT(T_NEC, 1 * T_COEFF_MIN_NEC, DATAX_CNT_L_ADJUST_NEC),
-            .typ = T_COUNT(T_NEC, 1                  , DATAX_CNT_L_ADJUST_NEC),
-            .max = T_COUNT(T_NEC, 1 * T_COEFF_MAX_NEC, DATAX_CNT_L_ADJUST_NEC)
-        },
-       .data1_l = {
-            .min = T_COUNT(T_NEC, 3 * T_COEFF_MIN_NEC, DATAX_CNT_L_ADJUST_NEC),
-            .typ = T_COUNT(T_NEC, 3                  , DATAX_CNT_L_ADJUST_NEC),
-            .max = T_COUNT(T_NEC, 3 * T_COEFF_MAX_NEC, DATAX_CNT_L_ADJUST_NEC)
+       .data_th_l = {
+            .min = 0,
+            .typ = T_COUNT(T_NEC, 2                     ),
+            .max = T_COUNT(T_NEC, 4                     )
         }
     },
     [IRR_TYPE_AEHA] = {
        .leader_h = { 
-            .min = T_COUNT(T_AEHA, 8 * T_COEFF_MIN_AEHA, 0),
-            .typ = T_COUNT(T_AEHA, 8                   , 0),
-            .max = T_COUNT(T_AEHA, 8 * T_COEFF_MAX_AEHA, 0)
+            .min = T_COUNT(T_AEHA, 8 * T_LEADER_COEFF_MIN),
+            .typ = T_COUNT(T_AEHA, 8                     ),
+            .max = T_COUNT(T_AEHA, 8 * T_LEADER_COEFF_MAX)
         },
        .leader_l = {
-            .min = T_COUNT(T_AEHA, 4 * T_COEFF_MIN_AEHA, 0),
-            .typ = T_COUNT(T_AEHA, 4                   , 0),
-            .max = T_COUNT(T_AEHA, 4 * T_COEFF_MAX_AEHA, 0)
+            .min = T_COUNT(T_AEHA, 4 * T_LEADER_COEFF_MIN),
+            .typ = T_COUNT(T_AEHA, 4                     ),
+            .max = T_COUNT(T_AEHA, 4 * T_LEADER_COEFF_MAX)
         },
-       .datax_h = {
-            .min = T_COUNT(T_AEHA, 1 * T_COEFF_MIN_AEHA, DATAX_CNT_H_ADJUST_AEHA),
-            .typ = T_COUNT(T_AEHA, 1                   , DATAX_CNT_H_ADJUST_AEHA),
-            .max = T_COUNT(T_AEHA, 1 * T_COEFF_MAX_AEHA, DATAX_CNT_H_ADJUST_AEHA)
+       .data_th_h = {
+            .min = 0,
+            .typ = T_COUNT(T_AEHA, 2                     ),
+            .max = T_COUNT(T_AEHA, 4                     )
         },
-       .data0_l = {
-            .min = T_COUNT(T_AEHA, 1 * T_COEFF_MIN_AEHA, DATAX_CNT_L_ADJUST_AEHA),
-            .typ = T_COUNT(T_AEHA, 1                   , DATAX_CNT_L_ADJUST_AEHA),
-            .max = T_COUNT(T_AEHA, 1 * T_COEFF_MAX_AEHA, DATAX_CNT_L_ADJUST_AEHA)
-        },
-       .data1_l = {
-            .min = T_COUNT(T_AEHA, 3 * T_COEFF_MIN_AEHA, DATAX_CNT_L_ADJUST_AEHA),
-            .typ = T_COUNT(T_AEHA, 3                   , DATAX_CNT_L_ADJUST_AEHA),
-            .max = T_COUNT(T_AEHA, 3 * T_COEFF_MAX_AEHA, DATAX_CNT_L_ADJUST_AEHA)
+       .data_th_l = {
+            .min = 0,
+            .typ = T_COUNT(T_AEHA, 2                     ),
+            .max = T_COUNT(T_AEHA, 4                     )
         }
     }
 };
@@ -225,10 +207,9 @@ void ir_receiver_pwa_isr(void)
             break;
 
         case IRR_STATE_DATA:
-            DATA.width_target0 = PARAMS[DATA.type].datax_h.typ;
-            DATA.width_target1 = 0;
-            if(    DATA.width_h >= PARAMS[DATA.type].datax_h.min
-                && DATA.width_h <= PARAMS[DATA.type].datax_h.max )
+            DATA.width_target0 = PARAMS[DATA.type].data_th_h.typ;
+            DATA.width_target1 = PARAMS[DATA.type].data_th_h.max;
+            if( DATA.width_h < PARAMS[DATA.type].data_th_h.typ )
             {
                 // OK。何もしない
             }
@@ -272,17 +253,16 @@ void ir_receiver_pra_isr(void)
             break;
 
         case IRR_STATE_DATA:
-            DATA.width_target0 = PARAMS[DATA.type].data0_l.typ;
-            DATA.width_target1 = PARAMS[DATA.type].data1_l.typ;;
-            if(    DATA.width_l >= PARAMS[DATA.type].data0_l.min
-                && DATA.width_l <= PARAMS[DATA.type].data0_l.max )
-            {
-                DATA.work_byte |= (1 << DATA.work_bitpos);
-            }
-            else if(    DATA.width_l >= PARAMS[DATA.type].data1_l.min
-                     && DATA.width_l <= PARAMS[DATA.type].data1_l.max )
+            DATA.width_target0 = PARAMS[DATA.type].data_th_l.typ;
+            DATA.width_target1 = PARAMS[DATA.type].data_th_l.max;
+            if( DATA.width_l < PARAMS[DATA.type].data_th_l.typ )
             {
                 DATA.work_byte &= ~(1 << DATA.work_bitpos);
+            }
+            else if(    DATA.width_l >= PARAMS[DATA.type].data_th_l.typ
+                     && DATA.width_l <= PARAMS[DATA.type].data_th_l.max )
+            {
+                DATA.work_byte |= (1 << DATA.work_bitpos);
             }
             else
             {
