@@ -23,13 +23,12 @@
 */
 
 #include "common.h"
+#include "main.h"
 #include "console.h"
 #include "buzzer.h"
 #include "interrupts.h"
 #include "ir_receiver.h"
 #include "pins.h"
-
-#include <stdio.h>
 
 //CONFIG1
 #pragma config FCMEN = ON
@@ -68,6 +67,10 @@
 //CONFIG5
 #pragma config CP = OFF
 
+volatile irr_common_data_t irr_common_data = {
+    .received = 0
+};
+
 void init()
 {
     pins_init();
@@ -83,16 +86,25 @@ int main()
 {
     init();
 
-    printf("Hi!");
-
     buzzer_on(BZR_FREQ2CNT(2000));
     __delay_ms(100);
     buzzer_on(BZR_FREQ2CNT(1000));
     __delay_ms(100);
     buzzer_off();
 
-    //LATCbits.LATC3 = 1;
-    LATCbits.LATC4 = 1;
-    while(1);
+    while(1)
+    {
+        if( COMMON.received != 0 )
+        {
+            COMMON.received = 0;
+            ir_receiver_dump();
+
+            LED1 = 1;
+            buzzer_on(BZR_FREQ2CNT(2000));
+            __delay_ms(100);
+            buzzer_off();
+            LED1 = 0;
+        }
+    }
     return 0;
 };

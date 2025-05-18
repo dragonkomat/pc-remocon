@@ -22,37 +22,13 @@
     SOFTWARE.
 */
 
-#include "common.h"
-#include "pins.h"
+#ifndef _PC_REMOCON_MAIN_H_
+#define _PC_REMOCON_MAIN_H_
 
-void pins_init(void)
-{
-    // RC3: LED1 (OUT)
-    ANSELCbits.ANSC3 = 0;
-    LATCbits.LATC3 = 0;
-    TRISCbits.TRISC3 = 0;
+typedef struct {
+    char    received;
+} irr_common_data_t;
+extern volatile irr_common_data_t irr_common_data;
+#define COMMON irr_common_data
 
-    // RC4: LED2 (OUT)
-    ANSELCbits.ANSC4 = 0;
-    LATCbits.LATC4 = 0;
-    TRISCbits.TRISC4 = 0;
-
-    // RA4: EUSART RX1 (IN)
-    ANSELAbits.ANSA4 = 0;
-    RX1PPS = 0x04;  // RA4
-    // RC2: EUSART TX1 (OUT)
-    ANSELCbits.ANSC2 = 0;
-    RC2PPS = 0x0F;  // CK1/TX1
-
-    // RA5: BUZZER (OUT)
-    ANSELAbits.ANSA5 = 0;
-    LATAbits.LATA5 = 0;
-    TRISAbits.TRISA5 = 0;
-    RA5PPS = 0x18;  // NCO1OUT
-
-    // RC5: IR receiver (IN)
-    ANSELCbits.ANSC5 = 0;
-    TRISCbits.TRISC5 = 1;
-    SMT1SIGPPS = 0x15;  // RC5
-    // 負論理の場合はSMT1CON0のSPOLビットを1にする
-}
+#endif // _PC_REMOCON_MAIN_H_

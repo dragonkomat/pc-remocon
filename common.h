@@ -31,4 +31,7 @@
 
 #define _XTAL_FREQ 32000000
 
+#define LED1    LATCbits.LATC3
+#define LED2    LATCbits.LATC4
+
 #endif // _PC_REMOCON_COMMON_H_

@@ -30,5 +30,6 @@ void ir_receiver_pra_isr(void);
 void ir_receiver_isr(void);
 void ir_receiver_tmr_isr(void);
 void ir_receiver_init(void);
+void ir_receiver_dump(void);
 
 #endif // _PC_REMOCON_IR_RECEIVER_H_
