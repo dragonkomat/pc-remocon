@@ -27,17 +27,76 @@
 
 #include <stdio.h>
 
+#define TXBUF_MAXLEN 32
+#define RXBUF_MAXLEN 32
+
+typedef struct {
+    char tx_pos_push;
+    char tx_pos_pop;
+    char tx_len;
+    char tx_buf[TXBUF_MAXLEN];
+    char rx_pos_push;
+    char rx_pos_pop;
+    char rx_len;
+    char rx_buf[RXBUF_MAXLEN];
+} console_data_t;
+
+volatile console_data_t console_data = {
+    .tx_pos_push = 0,
+    .tx_pos_pop = 0,
+    .tx_len = 0,
+    .rx_pos_push = 0,
+    .rx_pos_pop = 0,
+    .rx_len = 0,
+};
+#define DATA console_data
+
 void console_rx_isr(void)
 {
-    if(RC1STAbits.OERR)
+    if( RC1STAbits.OERR )
     {
+        // 何もしない
     }  
-    if(RC1STAbits.FERR)
+    if( RC1STAbits.FERR )
     {
+        // 何もしない
     } 
     
-    char rxdata = RC1REG;
-    //LATCbits.LATC3 = rxdata & 0x01;
+    DATA.rx_buf[DATA.rx_pos_push++] = RC1REG;
+    if( DATA.rx_pos_push >= RXBUF_MAXLEN )
+    {
+        DATA.rx_pos_push = 0;
+    }
+    if( DATA.rx_len < RXBUF_MAXLEN )
+    {
+        DATA.rx_len++;
+    }
+    else
+    {
+        // バッファが満杯の場合は一番古い1文字を捨てる
+        DATA.rx_pos_pop++;
+        if( DATA.rx_pos_pop >= RXBUF_MAXLEN )
+        {
+            DATA.rx_pos_pop = 0;
+        }        
+    }
+}
+
+void console_tx_isr(void)
+{
+    if( DATA.tx_len > 0 )
+    {
+        TX1REG = DATA.tx_buf[DATA.tx_pos_pop++];
+        if( DATA.tx_pos_pop >= TXBUF_MAXLEN )
+        {
+            DATA.tx_pos_pop = 0;
+        }
+        DATA.tx_len--;
+    }
+    else
+    {
+        PIE3bits.TX1IE = 0;
+    }
 }
 
 void console_init(void)
@@ -48,17 +107,44 @@ void console_init(void)
     TX1STA   = 0x24;    // CSRC=0, TX9=0, TXEN=1, SYNC=0, SENDB=0, BRGH=1, (TRMT=0), TX9D=0
     SP1BRGL  = 0x44;    // Fosc=32MHz, (SYNC=x, BRGH=1, BRG16=1 ... x4), SP1BRG=0x0044 ... 115.2kbps
     SP1BRGH  = 0x0;
-    PIR3bits.RC1IF = 0;
     PIE3bits.RC1IE = 1;
+    PIE3bits.TX1IE = 0;
 }
 
-// int getch(void)
-// {
-//     return 0;
-// }
+int getch(void)
+{
+    int ch;
+    di();
+    if( DATA.rx_len > 0 )
+    {
+        ch = DATA.rx_buf[DATA.rx_pos_pop++];
+        if( DATA.rx_pos_pop >= RXBUF_MAXLEN )
+        {
+            DATA.rx_pos_pop = 0;
+        }
+        DATA.rx_len--;
+    }
+    else
+    {
+        ch = 0;
+    }
+    ei();
+    return ch;
+}
 
 void putch(char txData)
 {
-    while(!(PIR3bits.TX1IF && TX1STAbits.TXEN));
-    TX1REG = txData;
+    while(DATA.tx_len >= TXBUF_MAXLEN);
+    di();
+    if(DATA.tx_len < TXBUF_MAXLEN)
+    {
+        DATA.tx_buf[DATA.tx_pos_push++] = txData;
+        if( DATA.tx_pos_push >= TXBUF_MAXLEN )
+        {
+            DATA.tx_pos_push = 0;
+        }
+        DATA.tx_len++;
+        PIE3bits.TX1IE = 1;
+    }
+    ei();
 }

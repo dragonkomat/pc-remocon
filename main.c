@@ -30,6 +30,8 @@
 #include "ir_receiver.h"
 #include "pins.h"
 
+#include <stdio.h>
+
 //CONFIG1
 #pragma config FCMEN = ON
 #pragma config CSWEN = ON
@@ -94,6 +96,12 @@ int main()
 
     while(1)
     {
+        int ch = getchar();
+        if( ch != 0 )
+        {
+            putchar(ch);
+        }
+
         if( COMMON.received != 0 )
         {
             COMMON.received = 0;

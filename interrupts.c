@@ -59,6 +59,11 @@ void __interrupt() isr(void)
         {
             console_rx_isr();
         }
+
+        if(PIE3bits.TX1IE == 1 && PIR3bits.TX1IF == 1)
+        {
+            console_tx_isr();
+        }
     }      
 }
 
