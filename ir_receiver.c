@@ -32,7 +32,6 @@
 #ifdef IRR_DUMP
 #include <stdio.h>
 #endif
-#include <string.h>
 
 #define SMTCLK              500E+3      // MFINTOSC(500kHz), CSEL=100
 #define SMTCLK_PS           1           // 1:1, PS=00
@@ -201,7 +200,7 @@ irr_data_t irr_data = {
 void ir_receiver_pwa_isr(void)
 {
 #ifndef IRR_DEBUG
-    if( DATA.error != IRR_ERROR_NONE || DATA.received != 0 )
+    if( DATA.error != IRR_ERROR_NONE || DATA.received != 0 || COMMON.received != 0)
         return;
 #endif  // IRR_DEBUG
 
@@ -258,7 +257,7 @@ void ir_receiver_pwa_isr(void)
 void ir_receiver_pra_isr(void)
 {
 #ifndef IRR_DEBUG
-    if( DATA.error != IRR_ERROR_NONE || DATA.received != 0 )
+    if( DATA.error != IRR_ERROR_NONE || DATA.received != 0 || COMMON.received != 0 )
         return;
 #endif  // IRR_DEBUG
     DATA.width_l = SMT1CPRH << 8 | SMT1CPRL;
@@ -339,62 +338,68 @@ void ir_receiver_pra_isr(void)
 
 void ir_receiver_isr(void)
 {
+    if( DATA.received == 0 && COMMON.received == 0 )
+    {
 #ifndef IRR_DEBUG
-    if( DATA.error == IRR_ERROR_NONE && DATA.state == IRR_STATE_DATA )
-    {
-        // 受信成功
-        if( DATA.type == IRR_TYPE_NEC && DATA.work_length == 4 )
+        char i;
+        if( DATA.error == IRR_ERROR_NONE && DATA.state == IRR_STATE_DATA )
         {
-            if( DATA.work[2] != (DATA.work[3] ^ 0xFF) )
+            // 受信成功
+            if( DATA.type == IRR_TYPE_NEC && DATA.work_length == 4 )
+            {
+                if( DATA.work[2] != (DATA.work[3] ^ 0xFF) )
+                {
+                    DATA.error = IRR_ERROR_DATA_CHECK;
+                }
+            }
+            else if( DATA.type == IRR_TYPE_AEHA && DATA.work_length >= 4 )
+            {
+                if( ((DATA.work[0] & 0x0F)
+                    ^ ((DATA.work[0] >> 4) & 0x0F)
+                    ^ (DATA.work[1] & 0x0F)
+                    ^ ((DATA.work[1] >> 4) & 0x0F)) != (DATA.work[2] & 0x0F) )
+                {
+                    DATA.error = IRR_ERROR_DATA_CHECK;
+                }
+            }
+            else
             {
                 DATA.error = IRR_ERROR_DATA_CHECK;
             }
-        }
-        else if( DATA.type == IRR_TYPE_AEHA && DATA.work_length >= 4 )
-        {
-            if( ((DATA.work[0] & 0x0F)
-                 ^ ((DATA.work[0] >> 4) & 0x0F)
-                 ^ (DATA.work[1] & 0x0F)
-                 ^ ((DATA.work[1] >> 4) & 0x0F)) != (DATA.work[2] & 0x0F) )
+
+            if( DATA.error == IRR_ERROR_NONE )
             {
-                DATA.error = IRR_ERROR_DATA_CHECK;
+                DATA.data_type = DATA.type;
+                DATA.data_extended_count = DATA.extended_count;
+                DATA.data_length = DATA.work_length;
+                for(i=0; i<DATA.work_length; i++)
+                {
+                    DATA.data[i] = DATA.work[i];
+                }
+                DATA.received = 1;
+                COMMON.received = 1;
+            }
+            else
+            {
+                // データチェック失敗
             }
         }
         else
         {
-            DATA.error = IRR_ERROR_DATA_CHECK;
+            // 受信失敗
         }
 
-        if( DATA.error == IRR_ERROR_NONE )
-        {
-            DATA.data_type = DATA.type;
-            DATA.data_extended_count = DATA.extended_count;
-            DATA.data_length = DATA.work_length;
-            memcpy(DATA.data, DATA.work, DATA.work_length);
-
-            DATA.received = 1;
-            COMMON.received = 1;
-        }
-        else
-        {
-            // データチェック失敗
-        }
-    }
-    else
-    {
-        // 受信失敗
-    }
-
-    DATA.work_byte = 0;
-    DATA.work_length = 0;
-    DATA.work_bitpos = 0;
-    DATA.extended_count = 0;
-    DATA.error = IRR_ERROR_NONE;
-    DATA.state = IRR_STATE_IDLE;
+        DATA.work_byte = 0;
+        DATA.work_length = 0;
+        DATA.work_bitpos = 0;
+        DATA.extended_count = 0;
+        DATA.error = IRR_ERROR_NONE;
+        DATA.state = IRR_STATE_IDLE;
 
 #else   // IRR_DEBUG
-    COMMON.received = 1;
+        COMMON.received = 1;
 #endif  // IRR_DEBUG
+    }
 
     SMT1CON1bits.GO = 0;
     SMT1STAT = 0xD0;
@@ -412,6 +417,14 @@ void ir_receiver_tmr_isr(void)
     DATA.debug_l_length = 0;
     DATA.debug_h_length = 0;
 #endif  // IRR_DEBUG
+
+    DATA.work_byte = 0;
+    DATA.work_length = 0;
+    DATA.work_bitpos = 0;
+    DATA.extended_count = 0;
+    DATA.error = IRR_ERROR_NONE;
+    DATA.state = IRR_STATE_IDLE;
+
     DATA.received = 0;
     LED2 = 0;
 }

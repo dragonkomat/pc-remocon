@@ -111,7 +111,8 @@ void console_init(void)
     PIE3bits.TX1IE = 0;
 }
 
-int getch(void)
+//int getch(void)
+int console_getch(void)
 {
     int ch;
     di();

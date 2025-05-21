@@ -28,5 +28,6 @@
 void console_init(void);
 void console_rx_isr(void);
 void console_tx_isr(void);
+int console_getch(void);
 
 #endif  //_PC_REMOCON_CONSOLE_H_

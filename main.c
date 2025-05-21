@@ -30,7 +30,7 @@
 #include "ir_receiver.h"
 #include "pins.h"
 
-#include <stdio.h>
+//#include <stdio.h>
 
 //CONFIG1
 #pragma config FCMEN = ON
@@ -96,15 +96,14 @@ int main()
 
     while(1)
     {
-        int ch = getchar();
+        int ch = console_getch();
         if( ch != 0 )
         {
-            putchar(ch);
+            //putchar(ch);
         }
 
         if( COMMON.received != 0 )
         {
-            COMMON.received = 0;
             ir_receiver_dump();
 
             LED1 = 1;
@@ -112,6 +111,8 @@ int main()
             __delay_ms(100);
             buzzer_off();
             LED1 = 0;
+
+            COMMON.received = 0;
         }
     }
     return 0;
