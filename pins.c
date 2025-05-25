@@ -37,6 +37,15 @@ void pins_init(void)
     LATCbits.LATC4 = 0;
     TRISCbits.TRISC4 = 0;
 
+    // RA2: PC Power Switch (OUT)
+    ANSELAbits.ANSA2 = 0;
+    TRISAbits.TRISA2 = 0;
+    LATAbits.LATA2 = 0;
+
+    // RC0: PC Power LED (IN, Inverted)
+    ANSELCbits.ANSC0 = 0;
+    TRISCbits.TRISC0 = 1;
+
     // RA4: EUSART RX1 (IN)
     ANSELAbits.ANSA4 = 0;
     RX1PPS = 0x04;  // RA4
@@ -54,5 +63,5 @@ void pins_init(void)
     ANSELCbits.ANSC5 = 0;
     TRISCbits.TRISC5 = 1;
     SMT1SIGPPS = 0x15;  // RC5
-    // 負論理の場合はSMT1CON0のSPOLビットを1にする
+    // 正論理の場合はSMT1CON0のSPOLビットを0にする
 }

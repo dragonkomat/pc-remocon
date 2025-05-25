@@ -29,6 +29,7 @@
 #include "interrupts.h"
 #include "ir_receiver.h"
 #include "pins.h"
+#include <pic16f18424.h>
 
 //#include <stdio.h>
 
