@@ -17,7 +17,9 @@
                 }
             ],
             "fileSet": "default",
-            "toolchain": "default-XC8"
+            "toolchain": "default-XC8",
+            "preBuildSteps": [],
+            "postBuildSteps": []
         }
     ],
     "propertyGroups": [
