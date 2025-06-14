@@ -517,7 +517,7 @@ void ir_receiver_init(void)
     PIE8bits.SMT1PWAIE = 1;
 
     T6CON = 0x70;       // ON=0, CKPS=111, OUTPS=0000 ... 1:128
-    T6HLT = 0x88;       // PSYNC=1, CPOL=0, CSYNC=0, MODE=01000 (Software Start One Shot Mode)
+    T6HLT = 0x08;       // PSYNC=0, CPOL=0, CSYNC=0, MODE=01000 (Software Start One Shot Mode)
     T6CLKCON = 0x06;    // (0), (0), (0), (0), CS=0110 ... MFINTOSC(31.25kHz)
     T6PR = REPEAT_TIMEOUT;
 

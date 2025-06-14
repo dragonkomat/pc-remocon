@@ -30,6 +30,7 @@
 #include "ir_receiver.h"
 #include "pins.h"
 
+#include <pic.h>
 #include <stdio.h>
 
 //CONFIG1
@@ -96,6 +97,8 @@ int main()
 
     while(1)
     {
+        SLEEP();
+
         int ch = console_getch();
         if( ch != EOF )
         {
