@@ -29,9 +29,8 @@
 #include "interrupts.h"
 #include "ir_receiver.h"
 #include "pins.h"
-#include <pic16f18424.h>
 
-//#include <stdio.h>
+#include <stdio.h>
 
 //CONFIG1
 #pragma config FCMEN = ON
@@ -98,7 +97,7 @@ int main()
     while(1)
     {
         int ch = console_getch();
-        if( ch != 0 )
+        if( ch != EOF )
         {
             //putchar(ch);
         }

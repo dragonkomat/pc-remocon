@@ -127,7 +127,7 @@ int console_getch(void)
     }
     else
     {
-        ch = 0;
+        ch = EOF;
     }
     ei();
     return ch;
