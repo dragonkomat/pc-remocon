@@ -6,7 +6,7 @@
             "id": "",
             "device": "PIC16F18424",
             "imageType": "application",
-            "imagePath": "./out/pc-remocon/default.elf",
+            "imagePath": "./out/ir-remocon-analyzer/default.elf",
             "toolProperties": "default-tool-base",
             "tool": "Snap",
             "packs": [
