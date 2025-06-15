@@ -23,7 +23,6 @@
 */
 
 #include "common.h"
-#include <pic16f18424.h>
 #include "ir_transmitter.h"
 
 #define TMRCLK              32E+6       // FOSC(32MHz), CS=0010
@@ -48,6 +47,8 @@ void ir_transmitter_init(void)
     T6PR = PERIOD_COUNT;
     PIR4bits.TMR6IF = 0;
 
+    // CLC4OUTの設定
+    // DSMのLow側キャリアを0固定にするために使用
     CLC4CON = 0x00;     // EN=0, (0), (OUT=0), INTP=0, INTN=0, MODE=000 (AND-OR)
     CLC4POL = 0x00;     // POL=0, (0), (0), (0), G4POL=0, G3POL=0, G2POL=0, G1POL=0
     CLC4GLS0 = 0x00;    // lcxg1 = logic 0
