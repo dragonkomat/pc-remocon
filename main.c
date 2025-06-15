@@ -28,6 +28,7 @@
 #include "buzzer.h"
 #include "interrupts.h"
 #include "ir_receiver.h"
+#include "ir_transmitter.h"
 #include "pins.h"
 
 #include <pic.h>
@@ -81,6 +82,7 @@ void init()
     console_init();
     buzzer_init();
     ir_receiver_init();
+    ir_transmitter_init();
 
     interrupts_init();
 }
