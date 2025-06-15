@@ -22,8 +22,8 @@
     SOFTWARE.
 */
 
-#ifndef _PC_REMOCON_COMMON_H_
-#define _PC_REMOCON_COMMON_H_
+#ifndef _IR_REMOCON_ANALYZER_COMMON_H_
+#define _IR_REMOCON_ANALYZER_COMMON_H_
 // IWYU pragma: always_keep
 
 #include <xc.h>
@@ -36,4 +36,4 @@
 #define PC_POWER_SW     LATAbits.LATA2
 #define PC_POWER_LED_N  PORTCbits.RC0
 
-#endif // _PC_REMOCON_COMMON_H_
+#endif // _IR_REMOCON_ANALYZER_COMMON_H_

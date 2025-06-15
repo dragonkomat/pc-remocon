@@ -22,8 +22,8 @@
     SOFTWARE.
 */
 
-#ifndef _PC_REMOCON_MAIN_H_
-#define _PC_REMOCON_MAIN_H_
+#ifndef _IR_REMOCON_ANALYZER_MAIN_H_
+#define _IR_REMOCON_ANALYZER_MAIN_H_
 
 typedef struct {
     char    received;
@@ -31,4 +31,4 @@ typedef struct {
 extern volatile irr_common_data_t irr_common_data;
 #define COMMON irr_common_data
 
-#endif // _PC_REMOCON_MAIN_H_
+#endif // _IR_REMOCON_ANALYZER_MAIN_H_

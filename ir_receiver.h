@@ -22,8 +22,8 @@
     SOFTWARE.
 */
 
-#ifndef _PC_REMOCON_IR_RECEIVER_H_
-#define _PC_REMOCON_IR_RECEIVER_H_
+#ifndef _IR_REMOCON_ANALYZER_IR_RECEIVER_H_
+#define _IR_REMOCON_ANALYZER_IR_RECEIVER_H_
 
 void ir_receiver_pwa_isr(void);
 void ir_receiver_pra_isr(void);
@@ -32,4 +32,4 @@ void ir_receiver_tmr_isr(void);
 void ir_receiver_init(void);
 void ir_receiver_dump(void);
 
-#endif // _PC_REMOCON_IR_RECEIVER_H_
+#endif // _IR_REMOCON_ANALYZER_IR_RECEIVER_H_

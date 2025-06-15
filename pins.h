@@ -22,9 +22,9 @@
     SOFTWARE.
 */
 
-#ifndef _PC_REMOCON_PINS_H_
-#define _PC_REMOCON_PINS_H_
+#ifndef _IR_REMOCON_ANALYZER_PINS_H_
+#define _IR_REMOCON_ANALYZER_PINS_H_
 
 void pins_init(void);
 
-#endif // _PC_REMOCON_PINS_H_
+#endif // _IR_REMOCON_ANALYZER_PINS_H_
