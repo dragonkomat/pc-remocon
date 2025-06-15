@@ -30,6 +30,7 @@ void pins_init(void)
     // RC1: IR LED (OUT)
     ANSELCbits.ANSC1 = 0;
     RC1PPS = 0x1A;  // DSM1OUT
+    TRISCbits.TRISC1 = 0;
 
     // RC3: LED1 (OUT)
     ANSELCbits.ANSC3 = 0;

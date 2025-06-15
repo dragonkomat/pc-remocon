@@ -99,12 +99,23 @@ int main()
 
     while(1)
     {
-        SLEEP();
+        // PWM使用時はSLEEPは使用不可(発振が止まる)
+        //SLEEP();
 
         int ch = console_getch();
         if( ch != EOF )
         {
             //putchar(ch);
+
+            // DSM1デバッグ用
+            if(ch == '0')
+            {
+                MD1CON0bits.BIT = 0;
+            }
+            else if(ch == '1')
+            {
+                MD1CON0bits.BIT = 1;
+            }
         }
 
         if( COMMON.received != 0 )
