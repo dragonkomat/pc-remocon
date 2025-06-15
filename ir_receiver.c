@@ -406,9 +406,9 @@ void ir_receiver_isr(void)
     while((SMT1STAT & 0xD0) != 0);
     SMT1CON1bits.GO = 1;
 
-    T6CONbits.ON = 0;
-    T6TMR = 0x00;
-    T6CONbits.ON = 1;
+    T4CONbits.ON = 0;
+    T4TMR = 0x00;
+    T4CONbits.ON = 1;
 }
 
 void ir_receiver_tmr_isr(void)
@@ -516,13 +516,13 @@ void ir_receiver_init(void)
     PIE8bits.SMT1PRAIE = 1;
     PIE8bits.SMT1PWAIE = 1;
 
-    T6CON = 0x70;       // ON=0, CKPS=111, OUTPS=0000 ... 1:128
-    T6HLT = 0x08;       // PSYNC=0, CPOL=0, CSYNC=0, MODE=01000 (Software Start One Shot Mode)
-    T6CLKCON = 0x06;    // (0), (0), (0), (0), CS=0110 ... MFINTOSC(31.25kHz)
-    T6PR = REPEAT_TIMEOUT;
+    T4CON = 0x70;       // ON=0, CKPS=111, OUTPS=0000 ... 1:128
+    T4HLT = 0x08;       // PSYNC=0, CPOL=0, CSYNC=0, MODE=01000 (Software Start One Shot Mode)
+    T4CLKCON = 0x06;    // (0), (0), (0), (0), CS=0110 ... MFINTOSC(31.25kHz)
+    T4PR = REPEAT_TIMEOUT;
 
-    PIR4bits.TMR6IF = 0;
-    PIE4bits.TMR6IE = 1;
+    PIR4bits.TMR4IF = 0;
+    PIE4bits.TMR4IE = 1;
 
     SMT1CON0bits.EN = 1;
     while((SMT1STAT & 0xD0) != 0);
