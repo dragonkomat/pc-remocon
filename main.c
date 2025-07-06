@@ -116,19 +116,25 @@ int main()
             {
                 MD1CON0bits.BIT = 1;
             }
+            else if(ch == 'a')
+            {
+                ir_receiver_set_mode(IRR_MODE_ANALIZE);
+            }
+            else if(ch == 'm')
+            {
+                ir_receiver_set_mode(IRR_MODE_MEASUREMENT);
+            }
         }
 
         if( COMMON.received != 0 )
         {
-            ir_receiver_dump();
-
             LED1 = 1;
             buzzer_on(BZR_FREQ2CNT(2000));
             __delay_ms(100);
             buzzer_off();
             LED1 = 0;
 
-            COMMON.received = 0;
+            ir_receiver_dump();
         }
     }
     return 0;

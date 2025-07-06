@@ -22,22 +22,37 @@
     SOFTWARE.
 */
 
-#ifndef _IR_REMOCON_ANALYZER_COMMON_H_
-#define _IR_REMOCON_ANALYZER_COMMON_H_
-// IWYU pragma: always_keep
+#include "common.h"
 
-#include <xc.h>
-#include <pic16f18424.h>
+void c_memzero(void *data, int length)
+{
+    char *d = (char *)data;
+    for(;length>0;length--)
+    {
+        *(d++) = 0;
+    }
+}
 
-#define _XTAL_FREQ 32000000
+void c_memcopy(void *dest, const void *src, int length)
+{
+    char *d = (char *)dest;
+    char *s= (char *)src;
+    for(;length>0;length--)
+    {
+        *(d++) = *(s++);
+    }
+}
 
-#define LED1            LATCbits.LATC3
-#define LED2            LATCbits.LATC4
-#define PC_POWER_SW     LATAbits.LATA2
-#define PC_POWER_LED_N  PORTCbits.RC0
-
-void c_memzero(void *data, int length);
-void c_memcopy(void *dest, const void *src, int length);
-int c_memcmp(void *data1, void *data2, int length);
-
-#endif // _IR_REMOCON_ANALYZER_COMMON_H_
+int c_memcmp(void *data1, void *data2, int length)
+{
+    char *d1 = (char *)data1;
+    char *d2 = (char *)data2;
+    for(;length>0;length--)
+    {
+        if( *(d1++) != *(d2++) )
+        {
+            return 1;
+        }
+    }
+    return 0;
+}

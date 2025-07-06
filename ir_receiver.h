@@ -25,10 +25,16 @@
 #ifndef _IR_REMOCON_ANALYZER_IR_RECEIVER_H_
 #define _IR_REMOCON_ANALYZER_IR_RECEIVER_H_
 
+typedef enum {
+    IRR_MODE_ANALIZE = 0,
+    IRR_MODE_MEASUREMENT,
+} irr_mode_t;
+
 void ir_receiver_pwa_isr(void);
 void ir_receiver_pra_isr(void);
 void ir_receiver_isr(void);
 void ir_receiver_tmr_isr(void);
+void ir_receiver_set_mode(irr_mode_t mode);
 void ir_receiver_init(void);
 void ir_receiver_dump(void);
 

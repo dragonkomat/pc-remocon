@@ -26,8 +26,8 @@
 #include "main.h"
 #include "ir_receiver.h"
 
-#define IRR_DUMP    1   // 受信結果のダンプ
-//#define IRR_DEBUG   1   // デバッグ: 信号受信の代わりにH/L期間を記録する
+#define IRR_DUMP            // 受信結果のダンプ
+//#define IRR_REPEAT_CHECK   // 2回連続で同じデータかのチェック
 
 #ifdef IRR_DUMP
 #include <stdio.h>
@@ -55,19 +55,19 @@
 #define REPEAT_TIMEOUT      TMR_COUNT(300E-3)       // リピートの終了を判断する時間
 
 typedef enum {
-    IRR_STATE_IDLE,
+    IRR_STATE_IDLE = 0,
     IRR_STATE_LEADER,
     IRR_STATE_DATA,
 } irr_state_t;
 
 typedef enum {
-    IRR_TYPE_NEC,
+    IRR_TYPE_NEC = 0,
     IRR_TYPE_AEHA,
     IRR_TYPE_SONY,  // 未実装
 } irr_type_t;
 
 typedef enum {
-    IRR_ERROR_NONE,
+    IRR_ERROR_NONE = 0,
     IRR_ERROR_STATE_H,
     IRR_ERROR_STATE_L,
     IRR_ERROR_LEADER_H,
@@ -80,325 +80,310 @@ typedef enum {
 
 typedef struct {
     int min;
-    int typ;
     int max;
 } irr_minmax_t;
 
 typedef struct {
-    irr_minmax_t leader_h;
-    irr_minmax_t leader_l;
-    irr_minmax_t data_th_h;
-    irr_minmax_t data_th_l;
+    irr_minmax_t    leader_h;
+    irr_minmax_t    leader_l;
+    int             data_th;
+    int             data_max;
 } irr_param_t;
 
 const irr_param_t irr_params[] = {
     [IRR_TYPE_NEC] = {
        .leader_h = { 
-            .min = SMT_COUNT(T_NEC * 16 * T_LEADER_COEFF_MIN),
-            .typ = SMT_COUNT(T_NEC * 16                     ),
-            .max = SMT_COUNT(T_NEC * 16 * T_LEADER_COEFF_MAX)
+            .min =  SMT_COUNT(T_NEC * 16 * T_LEADER_COEFF_MIN),
+            .max =  SMT_COUNT(T_NEC * 16 * T_LEADER_COEFF_MAX)
         },
        .leader_l = {
-            .min = SMT_COUNT(T_NEC * 8 * T_LEADER_COEFF_MIN),
-            .typ = SMT_COUNT(T_NEC * 8                     ),
-            .max = SMT_COUNT(T_NEC * 8 * T_LEADER_COEFF_MAX)
+            .min =  SMT_COUNT(T_NEC * 8 * T_LEADER_COEFF_MIN),
+            .max =  SMT_COUNT(T_NEC * 8 * T_LEADER_COEFF_MAX)
         },
-       .data_th_h = {
-            .min = 0,
-            .typ = SMT_COUNT(T_NEC * 2                     ),
-            .max = SMT_COUNT(T_NEC * 4                     )
-        },
-       .data_th_l = {
-            .min = 0,
-            .typ = SMT_COUNT(T_NEC * 2                     ),
-            .max = SMT_COUNT(T_NEC * 4                     )
-        }
+       .data_th =   SMT_COUNT(T_NEC * 2                     ),
+       .data_max =  SMT_COUNT(T_NEC * 4                     ),
     },
     [IRR_TYPE_AEHA] = {
        .leader_h = { 
-            .min = SMT_COUNT(T_AEHA * 8 * T_LEADER_COEFF_MIN),
-            .typ = SMT_COUNT(T_AEHA * 8                     ),
-            .max = SMT_COUNT(T_AEHA * 8 * T_LEADER_COEFF_MAX)
+            .min =  SMT_COUNT(T_AEHA * 8 * T_LEADER_COEFF_MIN),
+            .max =  SMT_COUNT(T_AEHA * 8 * T_LEADER_COEFF_MAX)
         },
        .leader_l = {
-            .min = SMT_COUNT(T_AEHA * 4 * T_LEADER_COEFF_MIN),
-            .typ = SMT_COUNT(T_AEHA * 4                     ),
-            .max = SMT_COUNT(T_AEHA * 4 * T_LEADER_COEFF_MAX)
+            .min =  SMT_COUNT(T_AEHA * 4 * T_LEADER_COEFF_MIN),
+            .max =  SMT_COUNT(T_AEHA * 4 * T_LEADER_COEFF_MAX)
         },
-       .data_th_h = {
-            .min = 0,
-            .typ = SMT_COUNT(T_AEHA * 2                     ),
-            .max = SMT_COUNT(T_AEHA * 4                     )
-        },
-       .data_th_l = {
-            .min = 0,
-            .typ = SMT_COUNT(T_AEHA * 2                     ),
-            .max = SMT_COUNT(T_AEHA * 4                     )
-        }
+       .data_th =   SMT_COUNT(T_AEHA * 2                     ),
+       .data_max =  SMT_COUNT(T_AEHA * 4                     ),
     }
 };
 #define PARAMS irr_params
 
 typedef struct {
-    irr_state_t state;
     irr_type_t  type;
-    irr_error_t error;
-    char        received;
+    char        length;
+    char        data[DATA_MAXLEN];
     char        extended_count;
     char        extended[DATA_EXTEND_MAX];
-    int         width_h;
-    int         width_l;
-#ifndef IRR_DEBUG
-    int         width_target0;
-    int         width_target1;
-    char        work_bitpos;
-    char        work_byte;
-    char        work_length;
-    char        work[DATA_MAXLEN];
-    irr_type_t  data_type;
-    char        data_extended_count;
-    char        data_extended[DATA_EXTEND_MAX];
-    char        data_length;
-    char        data[DATA_MAXLEN];
-#else   // IRR_DEBUG
-    char debug_l_length;
-    char debug_h_length;
-    int debug_l[DATA_MAXLEN_DEBUG];
-    int debug_h[DATA_MAXLEN_DEBUG];
-#endif  // IRR_DEBUG
+} irr_data_analyze_result_t;
+
+typedef struct {
+    irr_state_t                 state;
+    irr_error_t                 error;
+    char                        received;
+    char                        work_bitpos;
+    char                        work_byte;
+    irr_data_analyze_result_t   work;
+    irr_data_analyze_result_t   last;
+} irr_data_analyze_t;
+
+typedef struct {
+    char                        l_length;
+    int                         l_time[DATA_MAXLEN_DEBUG];
+    char                        h_length;
+    int                         h_time[DATA_MAXLEN_DEBUG];
+} irr_data_measurement_t;
+
+typedef struct {
+    volatile char               processing;
+    irr_mode_t                  mode;
+    int                         width_h;
+    int                         width_l;
+    union {
+        irr_data_analyze_t      analyze;
+        irr_data_measurement_t  measurement;
+    } u;
 } irr_data_t;
 
-irr_data_t irr_data = {
-    .state = IRR_STATE_IDLE,
-    .type = IRR_TYPE_NEC,
-    .error = IRR_ERROR_NONE,
-    .received = 0,
-    .extended_count = 0,
-    .extended = {0},
-    .width_h = 0,
-    .width_l = 0,
-#ifndef IRR_DEBUG
-    .width_target0 = 0,
-    .width_target1 = 0,
-    .work_bitpos = 0,
-    .work_byte = 0,
-    .work_length = 0,
-    .work = {0},
-    .data_type = IRR_TYPE_NEC,
-    .data_extended = 0,
-    .data_length = 0,
-    .data = {0},
-#else   // IRR_DEBUG
-    .debug_h ={0},
-    .debug_l ={0},
-    .debug_l_length = 0,
-    .debug_h_length = 0
-#endif  // IRR_DEBUG
-};
-#define DATA irr_data
+irr_data_t irr_data;
+#define DATA    irr_data
+#define DATA_A  DATA.u.analyze
+#define DATA_M  DATA.u.measurement
 
 void ir_receiver_pwa_isr(void)
 {
-#ifndef IRR_DEBUG
-    if( DATA.error != IRR_ERROR_NONE || DATA.received != 0 || COMMON.received != 0)
-        return;
-#endif  // IRR_DEBUG
-
     DATA.width_h = SMT1CPWH << 8 | SMT1CPWL;
+    DATA.processing = 1;
 
-#ifndef IRR_DEBUG
-    switch( DATA.state )
+    if( COMMON.received == 0 )
     {
-        case IRR_STATE_IDLE:
-            DATA.width_target0 = PARAMS[IRR_TYPE_NEC].leader_h.typ;
-            DATA.width_target1 = PARAMS[IRR_TYPE_AEHA].leader_h.typ;
-            if(    DATA.width_h >= PARAMS[IRR_TYPE_NEC].leader_h.min
-                && DATA.width_h <= PARAMS[IRR_TYPE_NEC].leader_h.max )
-            {
-                DATA.type = IRR_TYPE_NEC;
-                DATA.state = IRR_STATE_LEADER;
-            }
-            else if(    DATA.width_h >= PARAMS[IRR_TYPE_AEHA].leader_h.min
-                     && DATA.width_h <= PARAMS[IRR_TYPE_AEHA].leader_h.max )
-            {
-                DATA.type = IRR_TYPE_AEHA;
-                DATA.state = IRR_STATE_LEADER;
-            }
-            else
-            {
-                DATA.error = IRR_ERROR_LEADER_H;
-            }
-            break;
+        if( DATA.mode == IRR_MODE_ANALIZE )
+        {
+            if( DATA_A.error != IRR_ERROR_NONE || DATA_A.received != 0 )
+                return;
 
-        case IRR_STATE_DATA:
-            DATA.width_target0 = PARAMS[DATA.type].data_th_h.typ;
-            DATA.width_target1 = PARAMS[DATA.type].data_th_h.max;
-            if( DATA.width_h < PARAMS[DATA.type].data_th_h.typ )
+            switch( DATA_A.state )
             {
-                // OK。何もしない
-            }
-            else
-            {
-                DATA.error = IRR_ERROR_DATA_H;
-            }
-            break;
+                case IRR_STATE_IDLE:
+                    if(    DATA.width_h >= PARAMS[IRR_TYPE_NEC].leader_h.min
+                        && DATA.width_h <= PARAMS[IRR_TYPE_NEC].leader_h.max )
+                    {
+                        DATA_A.work.type = IRR_TYPE_NEC;
+                        DATA_A.state = IRR_STATE_LEADER;
+                    }
+                    else if(    DATA.width_h >= PARAMS[IRR_TYPE_AEHA].leader_h.min
+                            && DATA.width_h <= PARAMS[IRR_TYPE_AEHA].leader_h.max )
+                    {
+                        DATA_A.work.type = IRR_TYPE_AEHA;
+                        DATA_A.state = IRR_STATE_LEADER;
+                    }
+                    else
+                    {
+                        DATA_A.error = IRR_ERROR_LEADER_H;
+                    }
+                    break;
 
-        default:
-            DATA.error = IRR_ERROR_STATE_H;
-            break;
+                case IRR_STATE_DATA:
+                    if( DATA.width_h < PARAMS[DATA_A.work.type].data_th )
+                    {
+                        // OK。何もしない
+                    }
+                    else
+                    {
+                        DATA_A.error = IRR_ERROR_DATA_H;
+                    }
+                    break;
+
+                default:
+                    DATA_A.error = IRR_ERROR_STATE_H;
+                    break;
+            }
+        }
+        else if (DATA.mode == IRR_MODE_MEASUREMENT )
+        {
+            if( DATA_M.h_length < DATA_MAXLEN_DEBUG )
+                DATA_M.h_time[DATA_M.h_length++] = DATA.width_h;
+        }
+        else
+        {
+        }
     }
-
-#else   // IRR_DEBUG
-    if( DATA.debug_h_length < DATA_MAXLEN_DEBUG )
-        DATA.debug_h[DATA.debug_h_length++] = DATA.width_h;
-#endif  // IRR_DEBUG
 }
 
 void ir_receiver_pra_isr(void)
 {
-#ifndef IRR_DEBUG
-    if( DATA.error != IRR_ERROR_NONE || DATA.received != 0 || COMMON.received != 0 )
-        return;
-#endif  // IRR_DEBUG
     DATA.width_l = SMT1CPRH << 8 | SMT1CPRL;
-#ifndef IRR_DEBUG
-    switch( DATA.state )
-    {
-        case IRR_STATE_LEADER:
-            DATA.width_target0 = PARAMS[DATA.type].leader_l.typ;
-            DATA.width_target1 = 0;
-            if(    DATA.width_l >= PARAMS[DATA.type].leader_l.min
-                && DATA.width_l <= PARAMS[DATA.type].leader_l.max )
-            {
-                DATA.state = IRR_STATE_DATA;
-                LED2 = 1;
-            }
-            break;
+    DATA.processing = 1;
 
-        case IRR_STATE_DATA:
-            DATA.width_target0 = PARAMS[DATA.type].data_th_l.typ;
-            DATA.width_target1 = PARAMS[DATA.type].data_th_l.max;
-            if( DATA.width_l < PARAMS[DATA.type].data_th_l.typ )
+    if( COMMON.received == 0 )
+    {
+        if( DATA.mode == IRR_MODE_ANALIZE )
+        {
+            if( DATA_A.error != IRR_ERROR_NONE || DATA_A.received != 0 )
+                return;
+
+            switch( DATA_A.state )
             {
-                DATA.work_byte &= ~(1 << DATA.work_bitpos);
-            }
-            else if(    DATA.width_l >= PARAMS[DATA.type].data_th_l.typ
-                     && DATA.width_l <= PARAMS[DATA.type].data_th_l.max )
-            {
-                DATA.work_byte |= (1 << DATA.work_bitpos);
-            }
-            else
-            {
-                if( DATA.type == IRR_TYPE_AEHA )
-                {
-                    // 8ms以上のL期間(Trailer)の後に再度Leaderが来る場合は
-                    // IDLEステートに戻して続きのデータを受信する
-                    if( DATA.extended_count < DATA_EXTEND_MAX )
+                case IRR_STATE_LEADER:
+                    if(    DATA.width_l >= PARAMS[DATA_A.work.type].leader_l.min
+                        && DATA.width_l <= PARAMS[DATA_A.work.type].leader_l.max )
                     {
-                        DATA.extended[DATA.extended_count++] = DATA.work_length;
-                        DATA.state = IRR_STATE_IDLE;
+                        DATA_A.state = IRR_STATE_DATA;
+                        LED2 = 1;
+                    }
+                    break;
+
+                case IRR_STATE_DATA:
+                    if( DATA.width_l < PARAMS[DATA_A.work.type].data_th )
+                    {
+                        DATA_A.work_byte &= ~(1 << DATA_A.work_bitpos);
+                    }
+                    else if(    DATA.width_l >= PARAMS[DATA_A.work.type].data_th
+                             && DATA.width_l <= PARAMS[DATA_A.work.type].data_max )
+                    {
+                        DATA_A.work_byte |= (1 << DATA_A.work_bitpos);
                     }
                     else
                     {
-                        DATA.error = IRR_ERROR_DATA_L;
+                        if( DATA_A.work.type == IRR_TYPE_AEHA )
+                        {
+                            // 8ms以上のL期間(Trailer)の後に再度Leaderが来る場合は
+                            // IDLEステートに戻して続きのデータを受信する
+                            if( DATA_A.work.extended_count < DATA_EXTEND_MAX )
+                            {
+                                DATA_A.work.extended[DATA_A.work.extended_count++] = DATA_A.work.length;
+                                DATA_A.state = IRR_STATE_IDLE;
+                            }
+                            else
+                            {
+                                DATA_A.error = IRR_ERROR_DATA_L;
+                            }
+                        }
+                        else
+                        {
+                            DATA_A.error = IRR_ERROR_DATA_L;
+                        }
+                        break;
                     }
-                }
-                else
-                {
-                    DATA.error = IRR_ERROR_DATA_L;
-                }
-                break;
-            }
-            DATA.work_bitpos++;
-            if( DATA.work_bitpos >= 8 )
-            {
-                if( DATA.work_length < DATA_MAXLEN )
-                {
-                    DATA.work[DATA.work_length++] = DATA.work_byte;
-                }
-                else
-                {
-                    DATA.error = IRR_ERROR_DATA_OVERRUN;
-                }
-                DATA.work_byte = 0;
-                DATA.work_bitpos = 0;
-            }
-            break;
+                    DATA_A.work_bitpos++;
+                    if( DATA_A.work_bitpos >= 8 )
+                    {
+                        if( DATA_A.work.length < DATA_MAXLEN )
+                        {
+                            DATA_A.work.data[DATA_A.work.length++] = DATA_A.work_byte;
+                        }
+                        else
+                        {
+                            DATA_A.error = IRR_ERROR_DATA_OVERRUN;
+                        }
+                        DATA_A.work_byte = 0;
+                        DATA_A.work_bitpos = 0;
+                    }
+                    break;
 
-        default:
-            DATA.error = IRR_ERROR_STATE_L;
-            break;
+                default:
+                    DATA_A.error = IRR_ERROR_STATE_L;
+                    break;
+            }
+        }
+        else if( DATA.mode == IRR_MODE_MEASUREMENT )
+        {
+            if( DATA_M.l_length < DATA_MAXLEN_DEBUG )
+                DATA_M.l_time[DATA_M.l_length++] = DATA.width_l;
+        }
+        else
+        {
+        }
     }
 
-#else   // IRR_DEBUG
-    if( DATA.debug_l_length < DATA_MAXLEN_DEBUG )
-        DATA.debug_l[DATA.debug_l_length++] = DATA.width_l;
-#endif  // IRR_DEBUG
 }
 
 void ir_receiver_isr(void)
 {
-    if( DATA.received == 0 && COMMON.received == 0 )
-    {
-#ifndef IRR_DEBUG
-        char i;
-        if( DATA.error == IRR_ERROR_NONE && DATA.state == IRR_STATE_DATA )
-        {
-            // 受信成功
-            if( DATA.type == IRR_TYPE_NEC && DATA.work_length == 4 )
-            {
-                if( DATA.work[2] != (DATA.work[3] ^ 0xFF) )
-                {
-                    DATA.error = IRR_ERROR_DATA_CHECK;
-                }
-            }
-            else if( DATA.type == IRR_TYPE_AEHA && DATA.work_length >= 4 )
-            {
-                if( ((DATA.work[0] & 0x0F)
-                    ^ ((DATA.work[0] >> 4) & 0x0F)
-                    ^ (DATA.work[1] & 0x0F)
-                    ^ ((DATA.work[1] >> 4) & 0x0F)) != (DATA.work[2] & 0x0F) )
-                {
-                    DATA.error = IRR_ERROR_DATA_CHECK;
-                }
-            }
-            else
-            {
-                DATA.error = IRR_ERROR_DATA_CHECK;
-            }
+    DATA.processing = 1;
 
-            if( DATA.error == IRR_ERROR_NONE )
+    if( COMMON.received == 0 )
+    {
+        if( DATA.mode == IRR_MODE_ANALIZE )
+        {
+            if( DATA_A.received == 0 )
             {
-                DATA.data_type = DATA.type;
-                DATA.data_extended_count = DATA.extended_count;
-                DATA.data_length = DATA.work_length;
-                for(i=0; i<DATA.work_length; i++)
+                if( DATA_A.error == IRR_ERROR_NONE && DATA_A.state == IRR_STATE_DATA )
                 {
-                    DATA.data[i] = DATA.work[i];
+                    // 受信成功
+                    if( DATA_A.work.type == IRR_TYPE_NEC && DATA_A.work.length == 4 )
+                    {
+                        if( DATA_A.work.data[2] != (DATA_A.work.data[3] ^ 0xFF) )
+                        {
+                            DATA_A.error = IRR_ERROR_DATA_CHECK;
+                        }
+                    }
+                    else if( DATA_A.work.type == IRR_TYPE_AEHA && DATA_A.work.length >= 4 )
+                    {
+                        if( ((DATA_A.work.data[0] & 0x0F)
+                            ^ ((DATA_A.work.data[0] >> 4) & 0x0F)
+                            ^ (DATA_A.work.data[1] & 0x0F)
+                            ^ ((DATA_A.work.data[1] >> 4) & 0x0F)) != (DATA_A.work.data[2] & 0x0F) )
+                        {
+                            DATA_A.error = IRR_ERROR_DATA_CHECK;
+                        }
+                    }
+                    else
+                    {
+                        DATA_A.error = IRR_ERROR_DATA_CHECK;
+                    }
+
+                    if( DATA_A.error == IRR_ERROR_NONE )
+                    {
+                        if( DATA_A.last.length != 0 )
+                        {
+#ifdef IRR_REPEAT_CHECK
+                            // 2回連続で同じデータを受信した場合は受信完了
+                            if( c_memcmp(&DATA_A.last, &DATA_A.work, sizeof(DATA_A.work)) == 0 )
+                            {
+                                DATA_A.received = 1;
+                                COMMON.received = 1;
+                            }
+#else
+                            DATA_A.received = 1;
+                            COMMON.received = 1;
+#endif  // IRR_REPEAT_CHECK
+                        }
+                        c_memcopy(&DATA_A.last, &DATA_A.work, sizeof(DATA_A.last));
+                    }
+                    else
+                    {
+                        // データチェック失敗
+                    }
                 }
-                DATA.received = 1;
-                COMMON.received = 1;
+                else
+                {
+                    // 受信失敗
+                }
+
+                c_memzero(&DATA_A.work, sizeof(DATA_A.work));
+                DATA_A.work_byte = 0;
+                DATA_A.work_bitpos = 0;
+                DATA_A.error = IRR_ERROR_NONE;
+                DATA_A.state = IRR_STATE_IDLE;
             }
-            else
-            {
-                // データチェック失敗
-            }
+        }
+        else if( DATA.mode == IRR_MODE_MEASUREMENT )
+        {
+            COMMON.received = 1;
         }
         else
         {
-            // 受信失敗
         }
-
-        DATA.work_byte = 0;
-        DATA.work_length = 0;
-        DATA.work_bitpos = 0;
-        DATA.extended_count = 0;
-        DATA.error = IRR_ERROR_NONE;
-        DATA.state = IRR_STATE_IDLE;
-
-#else   // IRR_DEBUG
-        COMMON.received = 1;
-#endif  // IRR_DEBUG
     }
 
     SMT1CON1bits.GO = 0;
@@ -413,88 +398,109 @@ void ir_receiver_isr(void)
 
 void ir_receiver_tmr_isr(void)
 {
-#ifdef IRR_DEBUG
-    DATA.debug_l_length = 0;
-    DATA.debug_h_length = 0;
-#endif  // IRR_DEBUG
+    if( DATA.mode == IRR_MODE_ANALIZE )
+    {
+        c_memzero(&DATA_A.work, sizeof(DATA_A.work));
+        DATA_A.work_byte = 0;
+        DATA_A.work_bitpos = 0;
+        DATA_A.error = IRR_ERROR_NONE;
+        DATA_A.state = IRR_STATE_IDLE;
+        DATA_A.received = 0;
+    }
+    else if ( DATA.mode == IRR_MODE_MEASUREMENT )
+    {
+        DATA_M.l_length = 0;
+        DATA_M.h_length = 0;
+    }
+    else
+    {
+    }
 
-    DATA.work_byte = 0;
-    DATA.work_length = 0;
-    DATA.work_bitpos = 0;
-    DATA.extended_count = 0;
-    DATA.error = IRR_ERROR_NONE;
-    DATA.state = IRR_STATE_IDLE;
-
-    DATA.received = 0;
     LED2 = 0;
+    DATA.processing = 0;
 }
 
 void ir_receiver_dump(void)
 {
-#ifdef IRR_DUMP
-#ifndef IRR_DEBUG
     char i;
     char *t;
-    switch( DATA.data_type )
-    {
-    case IRR_TYPE_NEC:
-        t = "NEC";
-        break;
-    case IRR_TYPE_AEHA:
-        t = "AEHA";
-        break;
-    case IRR_TYPE_SONY:
-        t = "SONY";
-        break;
-    default:
-        t = "UNKNOWN";
-        break;
-    }
 
-    printf("=== Data received ===\r\n");
-    printf("Type       : %s\r\n", t);
-    printf("Length     : %02X\r\n", DATA.data_length);
-    printf("Ext. count : %02X\r\n", DATA.data_extended_count);
-    printf("Data       : ");
-    for( i=0; i < DATA.data_length; i++)
+    if( COMMON.received != 0 )
     {
-        printf("%02X ",DATA.data[i]);
-    }
-    printf("\r\n");
-#else  // IRR_DEBUG
-    char i;
-
-    printf("=== Data received ===\r\n");
-    for( i=0; i<DATA_MAXLEN_DEBUG; i++ )
-    {
-        if( i < DATA.debug_h_length || i < DATA.debug_l_length )
+#ifdef IRR_DUMP
+        printf("=== Data received ===\r\n");
+        if( DATA.mode == IRR_MODE_ANALIZE )
         {
-            printf("%02X: ", i);
-            if( i < DATA.debug_h_length )
+            switch( DATA_A.last.type )
             {
-                printf("%04X ", DATA.debug_h[i]);
+            case IRR_TYPE_NEC:
+                t = "NEC";
+                break;
+            case IRR_TYPE_AEHA:
+                t = "AEHA";
+                break;
+            case IRR_TYPE_SONY:
+                t = "SONY";
+                break;
+            default:
+                t = "UNKNOWN";
+                break;
             }
-            else
+
+            printf("Type       : %s\r\n", t);
+            printf("Length     : %02X\r\n", DATA_A.last.length);
+            printf("Ext. count : %02X\r\n", DATA_A.last.extended_count);
+            printf("Data       : ");
+            for( i=0; i < DATA_A.last.length; i++)
             {
-                printf("---- ");
-            }
-            if( i < DATA.debug_l_length )
-            {
-                printf("%04X ", DATA.debug_l[i]);
-            }
-            else
-            {
-                printf("---- ");
+                printf("%02X ",DATA_A.last.data[i]);
             }
             printf("\r\n");
         }
+        else if (DATA.mode == IRR_MODE_MEASUREMENT )
+        {
+            for( i=0; i<DATA_MAXLEN_DEBUG; i++ )
+            {
+                if( i < DATA_M.h_length || i < DATA_M.l_length )
+                {
+                    printf("%02X: ", i);
+                    if( i < DATA_M.h_length )
+                    {
+                        printf("%04X ", DATA_M.h_time[i]);
+                    }
+                    else
+                    {
+                        printf("---- ");
+                    }
+                    if( i < DATA_M.l_length )
+                    {
+                        printf("%04X ", DATA_M.l_time[i]);
+                    }
+                    else
+                    {
+                        printf("---- ");
+                    }
+                    printf("\r\n");
+                }
+                else
+                {
+                    break;
+                }
+            }
+        }
         else
         {
-            break;
         }
-    }
-#endif  // IRR_DEBUG
 #endif  // IRR_DUMP
+        c_memzero(&DATA_A.last, sizeof(DATA_A.last));
+        COMMON.received = 0;
+    }
+}
+
+void ir_receiver_set_mode(irr_mode_t mode)
+{
+    while( DATA.processing != 0 );
+    DATA.mode = mode;
 }
 
 void ir_receiver_init(void)
@@ -520,6 +526,9 @@ void ir_receiver_init(void)
     T4HLT = 0x08;       // PSYNC=0, CPOL=0, CSYNC=0, MODE=01000 (Software Start One Shot Mode)
     T4CLKCON = 0x06;    // (0), (0), (0), (0), CS=0110 ... MFINTOSC(31.25kHz)
     T4PR = REPEAT_TIMEOUT;
+
+    c_memzero(&DATA, sizeof(DATA));
+    DATA.mode = IRR_MODE_ANALIZE;
 
     PIR4bits.TMR4IF = 0;
     PIE4bits.TMR4IE = 1;
