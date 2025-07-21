@@ -43,7 +43,7 @@
             "files": [
                 {
                     "include": "**/*",
-                    "exclude": "**/(_build|out|cmake|.vscode)/**/*"
+                    "exclude": "**/(_build|out|cmake|.vscode|files)/**/*"
                 }
             ]
         }
