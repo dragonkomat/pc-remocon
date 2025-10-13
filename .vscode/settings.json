@@ -2,5 +2,6 @@
     "cmake.sourceDirectory": "${workspaceRoot}\\cmake\\ir-remocon-analyzer\\default",
     "mplab.clangd.arguments": [
         "--compile-commands-dir=${workspaceRoot}\\_build\\ir-remocon-analyzer\\default"
-    ]
+    ],
+    "mplab.clangd.path": ""
 }
