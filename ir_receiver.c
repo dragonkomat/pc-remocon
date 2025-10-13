@@ -350,7 +350,7 @@ void __interrupt(__flags(PEIE, SMT1IE, SMT1IF, 13))
 
                     if( DATA_A.error == IRR_ERROR_NONE )
                     {
-                        if( DATA_A.last.length != 0 )
+                        if( DATA_A.work.length != 0 )
                         {
 #ifdef IRR_REPEAT_CHECK
                             // 2回連続で同じデータを受信した場合は受信完了
