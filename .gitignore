@@ -1,3 +1,5 @@
 _build/
 out/
 cmake/
+.vscode/*.backup
+.vscode/*.mplab-local.json
