@@ -159,8 +159,10 @@ irr_data_t irr_data;
 #define DATA_A  DATA.u.analyze
 #define DATA_M  DATA.u.measurement
 
-void ir_receiver_pwa_isr(void)
+void __interrupt(__flags(PEIE, SMT1PWAIE, SMT1PWAIF, 11))
+    ir_receiver_pwa_isr(void)
 {
+    SMT1PWAIF = 0;
     DATA.width_h = SMT1CPWH << 8 | SMT1CPWL;
     DATA.processing = 1;
 
@@ -219,8 +221,10 @@ void ir_receiver_pwa_isr(void)
     }
 }
 
-void ir_receiver_pra_isr(void)
+void __interrupt(__flags(PEIE, SMT1PRAIE, SMT1PRAIF, 12))
+    ir_receiver_pra_isr(void)
 {
+    SMT1PRAIF = 0;
     DATA.width_l = SMT1CPRH << 8 | SMT1CPRL;
     DATA.processing = 1;
 
@@ -307,8 +311,10 @@ void ir_receiver_pra_isr(void)
 
 }
 
-void ir_receiver_isr(void)
+void __interrupt(__flags(PEIE, SMT1IE, SMT1IF, 13))
+    ir_receiver_isr(void)
 {
+    SMT1IF = 0;
     DATA.processing = 1;
 
     if( COMMON.received == 0 )
@@ -396,8 +402,10 @@ void ir_receiver_isr(void)
     T4CONbits.ON = 1;
 }
 
-void ir_receiver_tmr_isr(void)
+void __interrupt(__flags(PEIE, TMR4IE, TMR4IF, 10))
+    ir_receiver_tmr_isr(void)
 {
+    TMR4IF = 0;
     if( DATA.mode == IRR_MODE_ANALIZE )
     {
         c_memzero(&DATA_A.work, sizeof(DATA_A.work));

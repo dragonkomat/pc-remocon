@@ -51,7 +51,8 @@ volatile console_data_t console_data = {
 };
 #define DATA console_data
 
-void console_rx_isr(void)
+void __interrupt(__flags(PEIE, RC1IE, RC1IF, 20))
+    console_rx_isr(void)
 {
     if( RC1STAbits.OERR )
     {
@@ -82,7 +83,8 @@ void console_rx_isr(void)
     }
 }
 
-void console_tx_isr(void)
+void __interrupt(__flags(PEIE, TX1IE, TX1IF, 21))
+    console_tx_isr(void)
 {
     if( DATA.tx_len > 0 )
     {

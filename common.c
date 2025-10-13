@@ -24,6 +24,8 @@
 
 #include "common.h"
 
+#pragma warning disable 1610  // advisory: (1610) function "*" has been referenced by assembly code and shall use a reentrant data stack
+
 void c_memzero(void *data, int length)
 {
     char *d = (char *)data;

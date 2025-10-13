@@ -26,8 +26,6 @@
 #define _IR_REMOCON_ANALYZER_CONSOLE_H_
 
 void console_init(void);
-void console_rx_isr(void);
-void console_tx_isr(void);
 int console_getch(void);
 
 #endif  //_IR_REMOCON_ANALYZER_CONSOLE_H_

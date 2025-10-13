@@ -24,53 +24,11 @@
 
 #include "common.h"
 #include "interrupts.h"
-#include "console.h"
-#include "ir_receiver.h"
-
-void __interrupt() isr(void)
-{
-    if(INTCONbits.PEIE == 1)
-    {
-        if(PIE4bits.TMR4IE == 1 && PIR4bits.TMR4IF == 1)
-        {
-            PIR4bits.TMR4IF = 0;
-            ir_receiver_tmr_isr();
-        }
-
-        if(PIE8bits.SMT1PWAIE == 1 && PIR8bits.SMT1PWAIF == 1)
-        {
-            PIR8bits.SMT1PWAIF = 0;
-            ir_receiver_pwa_isr();
-        }
-
-        if(PIE8bits.SMT1PRAIE == 1 && PIR8bits.SMT1PRAIF == 1)
-        {
-            PIR8bits.SMT1PRAIF = 0;
-            ir_receiver_pra_isr();
-        }
-
-        if(PIE8bits.SMT1IE == 1 && PIR8bits.SMT1IF == 1)
-        {
-            PIR8bits.SMT1IF = 0;
-            ir_receiver_isr();
-        }
-
-        if(PIE3bits.RC1IE == 1 && PIR3bits.RC1IF == 1)
-        {
-            console_rx_isr();
-        }
-
-        if(PIE3bits.TX1IE == 1 && PIR3bits.TX1IF == 1)
-        {
-            console_tx_isr();
-        }
-    }      
-}
 
 void interrupts_init(void)
 {
-    PIR0bits.INTF = 0;
-    INTCONbits.INTEDG = 1;
-    INTCONbits.PEIE = 1;
-    INTCONbits.GIE = 1;
+    INTF = 0;
+    INTEDG = 1;
+    PEIE = 1;
+    ei();
 }
