@@ -2,14 +2,14 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Launch ir-remocon-analyzer: default",
+            "name": "Launch pc-remocon: default",
             "type": "mplab-core-da",
             "request": "launch",
-            "project": "ir-remocon-analyzer",
+            "project": "pc-remocon",
             "configuration": "default",
             "tool": "${command:pickTool}",
             "stopOnEntry": true,
-            "preLaunchTask": "ir-remocon-analyzer: default - Full Build"
+            "preLaunchTask": "pc-remocon: default - Full Build"
         }
     ]
 }

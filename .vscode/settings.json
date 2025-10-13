@@ -1,7 +1,7 @@
 {
-    "cmake.sourceDirectory": "${workspaceRoot}\\cmake\\ir-remocon-analyzer\\default",
+    "cmake.sourceDirectory": "${workspaceRoot}\\cmake\\pc-remocon\\default",
     "mplab.clangd.arguments": [
-        "--compile-commands-dir=${workspaceRoot}\\_build\\ir-remocon-analyzer\\default"
+        "--compile-commands-dir=${workspaceRoot}\\_build\\pc-remocon\\default"
     ],
     "mplab.clangd.path": "c:\\Program Files\\Microchip\\xc8\\v3.10\\bin\\xc8-clangd.exe",
     "memory-inspector.debugTypes": [
