@@ -25,8 +25,19 @@
 #ifndef _IR_REMOCON_ANALYZER_MAIN_H_
 #define _IR_REMOCON_ANALYZER_MAIN_H_
 
+typedef enum {
+    KEYCODE_NONE = 0,
+    KEYCODE_OFF,
+    KEYCODE_FAVORITE,
+    KEYCODE_NIGHTLIGHT,
+    KEYCODE_MINUS,
+    KEYCODE_PLUS,
+    KEYCODE_ALL,
+} keycode_t;
+
 typedef struct {
-    char    received;
+    char        received;
+    keycode_t   keycode;
 } irr_common_data_t;
 extern volatile irr_common_data_t irr_common_data;
 #define COMMON irr_common_data

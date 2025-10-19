@@ -357,8 +357,44 @@ void __interrupt(__flags(PEIE, SMT1IE, SMT1IF, 13))
                                 COMMON.received = 1;
                             }
 #else
-                            DATA_A.received = 1;
-                            COMMON.received = 1;
+                            // コード確認
+                            COMMON.keycode = KEYCODE_NONE;
+                            if ( DATA_A.work.type == IRR_TYPE_NEC && DATA_A.work.length == 4 )
+                            {
+                                // Nature Remo Preset: NEC LIGHT 201
+                                if( DATA_A.work.data[0] == 0x82 && DATA_A.work.data[1] == 0x6d )
+                                {
+                                    if( DATA_A.work.data[2] == 0xbe && DATA_A.work.data[3] == 0x41 )
+                                    {
+                                        COMMON.keycode = KEYCODE_OFF;
+                                    }
+                                    else if ( DATA_A.work.data[2] == 0xbd && DATA_A.work.data[3] == 0x42 )
+                                    {
+                                        COMMON.keycode = KEYCODE_FAVORITE;
+                                    }
+                                    else if ( DATA_A.work.data[2] == 0xbc && DATA_A.work.data[3] == 0x43 )
+                                    {
+                                        COMMON.keycode = KEYCODE_NIGHTLIGHT;
+                                    }
+                                    else if ( DATA_A.work.data[2] == 0xbb && DATA_A.work.data[3] == 0x44 )
+                                    {
+                                        COMMON.keycode = KEYCODE_MINUS;
+                                    }
+                                    else if ( DATA_A.work.data[2] == 0xba && DATA_A.work.data[3] == 0x45 )
+                                    {
+                                        COMMON.keycode = KEYCODE_PLUS;
+                                    }
+                                    else if ( DATA_A.work.data[2] == 0xa6 && DATA_A.work.data[3] == 0x59 )
+                                    {
+                                        COMMON.keycode = KEYCODE_ALL;
+                                    }
+                                }
+                            }
+                            if( COMMON.keycode != KEYCODE_NONE )
+                            {
+                                DATA_A.received = 1;
+                                COMMON.received = 1;
+                            }
 #endif  // IRR_REPEAT_CHECK
                         }
                         c_memcopy(&DATA_A.last, &DATA_A.work, sizeof(DATA_A.last));

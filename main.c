@@ -68,8 +68,16 @@
 //CONFIG5
 #pragma config CP = OFF
 
+typedef enum {
+    CMD_NONE = 0,
+    CMD_OFF,
+    CMD_ON,
+    CMD_LONGPUSH,
+} pcremocon_cmd_t;
+
 volatile irr_common_data_t irr_common_data = {
-    .received = 0
+    .received = 0,
+    .keycode = KEYCODE_NONE
 };
 
 void init()
@@ -84,13 +92,10 @@ void init()
 
 int main()
 {
-    init();
+    pcremocon_cmd_t cmd;
+    int i;
 
-    buzzer_on(BZR_FREQ2CNT(2000));
-    __delay_ms(100);
-    buzzer_on(BZR_FREQ2CNT(1000));
-    __delay_ms(100);
-    buzzer_off();
+    init();
 
     while(1)
     {
@@ -100,11 +105,86 @@ int main()
         if( COMMON.received != 0 )
         {
             LED1 = 1;
-            buzzer_on(BZR_FREQ2CNT(2000));
-            __delay_ms(100);
-            buzzer_off();
-            LED1 = 0;
 
+            // 動作判定
+            cmd = CMD_NONE;
+            if( COMMON.keycode == KEYCODE_OFF )
+            {
+                //buzzer_on(BZR_FREQ2CNT(523));
+                if( PC_POWER_LED_N == 0 )
+                {
+                    cmd = CMD_OFF;
+                }
+            }
+            else if ( COMMON.keycode == KEYCODE_FAVORITE )
+            {
+                //buzzer_on(BZR_FREQ2CNT(587));
+            }
+            else if ( COMMON.keycode == KEYCODE_NIGHTLIGHT )
+            {
+                //buzzer_on(BZR_FREQ2CNT(659));
+                cmd = CMD_LONGPUSH;
+            }
+            else if ( COMMON.keycode == KEYCODE_MINUS )
+            {
+                //buzzer_on(BZR_FREQ2CNT(698));
+            }
+            else if ( COMMON.keycode == KEYCODE_PLUS )
+            {
+                //buzzer_on(BZR_FREQ2CNT(783));
+            }
+            else if ( COMMON.keycode == KEYCODE_ALL )
+            {
+                //buzzer_on(BZR_FREQ2CNT(880));
+                if( PC_POWER_LED_N != 0 )
+                {
+                    cmd = CMD_ON;
+                }
+            }
+
+            // 動作実行
+            if( cmd == CMD_OFF )
+            {
+                PC_POWER_SW = 1;
+                buzzer_on(BZR_FREQ2CNT(2000));
+                __delay_ms(400);
+                buzzer_off();
+                __delay_ms(100);
+                PC_POWER_SW = 0;
+            }
+            else if( cmd == CMD_ON )
+            {
+                PC_POWER_SW = 1;
+                buzzer_on(BZR_FREQ2CNT(2000));
+                __delay_ms(200);
+                buzzer_on(BZR_FREQ2CNT(1000));
+                __delay_ms(200);
+                buzzer_off();
+                __delay_ms(100);
+                PC_POWER_SW = 0;
+            }
+            else if( cmd == CMD_LONGPUSH )
+            {
+                PC_POWER_SW = 1;
+                for( i=0; i<120/2; i++ )
+                {
+                    LED1 = 1;
+                    buzzer_on(BZR_FREQ2CNT(2000));
+                    __delay_ms(100);
+                    LED1 = 0;
+                    buzzer_off();
+                    __delay_ms(100);
+                }
+                buzzer_off();
+                PC_POWER_SW = 0;
+            }
+            else
+            {
+                buzzer_on(BZR_FREQ2CNT(1000));
+                __delay_ms(100);
+                buzzer_off();        
+            }
+            LED1 = 0;
             COMMON.received = 0;
         }
     }
