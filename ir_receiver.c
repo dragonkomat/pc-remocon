@@ -240,7 +240,6 @@ void __interrupt(__flags(PEIE, SMT1PRAIE, SMT1PRAIF, 12))
                         && DATA.width_l <= PARAMS[DATA_A.work.type].leader_l.max )
                     {
                         DATA_A.state = IRR_STATE_DATA;
-                        LED2 = 1;
                     }
                     break;
 
@@ -422,7 +421,6 @@ void __interrupt(__flags(PEIE, TMR4IE, TMR4IF, 10))
     {
     }
 
-    LED2 = 0;
     DATA.processing = 0;
 }
 

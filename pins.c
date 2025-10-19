@@ -32,11 +32,6 @@ void pins_init(void)
     LATCbits.LATC3 = 0;
     TRISCbits.TRISC3 = 0;
 
-    // RC4: LED2 (OUT)
-    ANSELCbits.ANSC4 = 0;
-    LATCbits.LATC4 = 0;
-    TRISCbits.TRISC4 = 0;
-
     // RA2: PC Power Switch (OUT)
     ANSELAbits.ANSA2 = 0;
     TRISAbits.TRISA2 = 0;

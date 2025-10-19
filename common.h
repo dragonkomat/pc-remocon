@@ -32,7 +32,6 @@
 #define _XTAL_FREQ 32000000
 
 #define LED1            LATCbits.LATC3
-#define LED2            LATCbits.LATC4
 #define PC_POWER_SW     LATAbits.LATA2
 #define PC_POWER_LED_N  PORTCbits.RC0
 
