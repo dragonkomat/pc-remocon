@@ -26,12 +26,10 @@
 #include "main.h"
 #include "ir_receiver.h"
 
-#define IRR_DUMP            // 受信結果のダンプ
-//#define IRR_REPEAT_CHECK   // 2回連続で同じデータかのチェック
+#pragma warning disable 2226    // advisory: (2226) large interrupt context save required for "_ir_receiver_pwa_isr"; consider reducing ISR complexity to lower the number of saved registers
+#pragma warning disable 520     // (520) function "_ir_receiver_set_mode" is never called
 
-#ifdef IRR_DUMP
-#include <stdio.h>
-#endif
+//#define IRR_REPEAT_CHECK   // 2回連続で同じデータかのチェック
 
 #define SMTCLK              500E+3      // MFINTOSC(500kHz), CSEL=100
 #define SMTCLK_PS           1           // 1:1, PS=00
@@ -426,83 +424,6 @@ void __interrupt(__flags(PEIE, TMR4IE, TMR4IF, 10))
 
     LED2 = 0;
     DATA.processing = 0;
-}
-
-void ir_receiver_dump(void)
-{
-    char i;
-    char *t;
-
-    if( COMMON.received != 0 )
-    {
-#ifdef IRR_DUMP
-        printf("=== Data received ===\r\n");
-        if( DATA.mode == IRR_MODE_ANALIZE )
-        {
-            switch( DATA_A.last.type )
-            {
-            case IRR_TYPE_NEC:
-                t = "NEC";
-                break;
-            case IRR_TYPE_AEHA:
-                t = "AEHA";
-                break;
-            case IRR_TYPE_SONY:
-                t = "SONY";
-                break;
-            default:
-                t = "UNKNOWN";
-                break;
-            }
-
-            printf("Type       : %s\r\n", t);
-            printf("Length     : %02X\r\n", DATA_A.last.length);
-            printf("Ext. count : %02X\r\n", DATA_A.last.extended_count);
-            printf("Data       : ");
-            for( i=0; i < DATA_A.last.length; i++)
-            {
-                printf("%02X ",DATA_A.last.data[i]);
-            }
-            printf("\r\n");
-        }
-        else if (DATA.mode == IRR_MODE_MEASUREMENT )
-        {
-            for( i=0; i<DATA_MAXLEN_DEBUG; i++ )
-            {
-                if( i < DATA_M.h_length || i < DATA_M.l_length )
-                {
-                    printf("%02X: ", i);
-                    if( i < DATA_M.h_length )
-                    {
-                        printf("%04X ", DATA_M.h_time[i]);
-                    }
-                    else
-                    {
-                        printf("---- ");
-                    }
-                    if( i < DATA_M.l_length )
-                    {
-                        printf("%04X ", DATA_M.l_time[i]);
-                    }
-                    else
-                    {
-                        printf("---- ");
-                    }
-                    printf("\r\n");
-                }
-                else
-                {
-                    break;
-                }
-            }
-        }
-        else
-        {
-        }
-#endif  // IRR_DUMP
-        c_memzero(&DATA_A.last, sizeof(DATA_A.last));
-        COMMON.received = 0;
-    }
 }
 
 void ir_receiver_set_mode(irr_mode_t mode)

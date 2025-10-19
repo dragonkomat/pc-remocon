@@ -25,6 +25,7 @@
 #include "common.h"
 
 #pragma warning disable 1610  // advisory: (1610) function "*" has been referenced by assembly code and shall use a reentrant data stack
+#pragma warning disable 520   // (520) function "_ir_receiver_set_mode" is never called
 
 void c_memzero(void *data, int length)
 {

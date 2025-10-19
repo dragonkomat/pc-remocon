@@ -24,15 +24,12 @@
 
 #include "common.h"
 #include "main.h"
-#include "console.h"
 #include "buzzer.h"
 #include "interrupts.h"
 #include "ir_receiver.h"
-#include "ir_transmitter.h"
 #include "pins.h"
 
 #include <pic.h>
-#include <stdio.h>
 
 //CONFIG1
 #pragma config FCMEN = ON
@@ -79,10 +76,8 @@ void init()
 {
     pins_init();
 
-    console_init();
     buzzer_init();
     ir_receiver_init();
-    ir_transmitter_init();
 
     interrupts_init();
 }
@@ -102,30 +97,6 @@ int main()
         // PWM使用時はSLEEPは使用不可(発振が止まる)
         //SLEEP();
 
-        int ch = console_getch();
-        if( ch != EOF )
-        {
-            //putchar(ch);
-
-            // DSM1デバッグ用
-            if(ch == '0')
-            {
-                MD1CON0bits.BIT = 0;
-            }
-            else if(ch == '1')
-            {
-                MD1CON0bits.BIT = 1;
-            }
-            else if(ch == 'a')
-            {
-                ir_receiver_set_mode(IRR_MODE_ANALIZE);
-            }
-            else if(ch == 'm')
-            {
-                ir_receiver_set_mode(IRR_MODE_MEASUREMENT);
-            }
-        }
-
         if( COMMON.received != 0 )
         {
             LED1 = 1;
@@ -134,7 +105,7 @@ int main()
             buzzer_off();
             LED1 = 0;
 
-            ir_receiver_dump();
+            COMMON.received = 0;
         }
     }
     return 0;

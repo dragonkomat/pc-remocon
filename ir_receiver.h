@@ -32,6 +32,5 @@ typedef enum {
 
 void ir_receiver_set_mode(irr_mode_t mode);
 void ir_receiver_init(void);
-void ir_receiver_dump(void);
 
 #endif // _IR_REMOCON_ANALYZER_IR_RECEIVER_H_

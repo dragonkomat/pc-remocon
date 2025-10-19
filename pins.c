@@ -27,11 +27,6 @@
 
 void pins_init(void)
 {
-    // RC1: IR LED (OUT)
-    ANSELCbits.ANSC1 = 0;
-    RC1PPS = 0x1A;  // DSM1OUT
-    TRISCbits.TRISC1 = 0;
-
     // RC3: LED1 (OUT)
     ANSELCbits.ANSC3 = 0;
     LATCbits.LATC3 = 0;
@@ -50,13 +45,6 @@ void pins_init(void)
     // RC0: PC Power LED (IN, Inverted)
     ANSELCbits.ANSC0 = 0;
     TRISCbits.TRISC0 = 1;
-
-    // RA4: EUSART RX1 (IN)
-    ANSELAbits.ANSA4 = 0;
-    RX1PPS = 0x04;  // RA4
-    // RC2: EUSART TX1 (OUT)
-    ANSELCbits.ANSC2 = 0;
-    RC2PPS = 0x0F;  // CK1/TX1
 
     // RA5: BUZZER (OUT)
     ANSELAbits.ANSA5 = 0;
