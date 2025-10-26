@@ -1,14 +1,11 @@
-# IR Remocon Analyzer (赤外線リモコン解析)
+# PC Remocon (赤外線リモコンでPCの電源ボタンを操作する)
 
 ## 概要
 
-PICマイコン(PIC16F18424)を使った赤外線リモコン解析ツールです。
-
-下記の機能があります:
-+ NECフォーマット・家製協フォーマットのコードの解析
-+ Hi/Low時間の解析
-
-元々はPCを赤外線リモコンでオンオフするガジェットを作ろうと思っていたのですが、折角ならちゃんと解析できるツールにしてしまおうと思ってこの形になりました。
+PICマイコン(PIC16F18424)を使って赤外線リモコンでPCの電源ボタンを操作できるようにします。
+PCのマザーボードから出ているPWR SWとPWR LED信号を使用し、電源LEDの状態を見ながら電源ボタン操作をします。
+これにより意図しない電源オンオフが起こらないようにしています。
+操作時にはLEDが点灯しブザーが鳴ります。
 
 ## ビルド・デバッグ環境
 
@@ -17,11 +14,27 @@ PICマイコン(PIC16F18424)を使った赤外線リモコン解析ツールで�
  \+ [MPLAB Extension Pack](https://marketplace.visualstudio.com/items?itemName=Microchip.mplab-extension-pack)
 + [MPLAB XC8 Compiler](https://www.microchip.com/en-us/tools-resources/develop/mplab-xc-compilers/xc8)
 + [MPLAB Snap](https://www.microchip.com/en-us/development-tool/pg164100)
-+ [TeraTerm](https://teratermproject.github.io/)
 + [MPLAB Integrated Programming Environment(IPE)](https://www.microchip.com/en-us/tools-resources/production/mplab-integrated-programming-environment)[^A]
 
 ※ MPLAB Code Configurator(MCC)は使用してません
 ※ Windows環境で開発
+
+## 赤外線リモコン
+
+赤外線リモコンには[Nature Remo Nano](https://shop.nature.global/products/nature-remo-nano)を使用します。
+
+本ソースでは照明のプリセット「NEC LIGHT 201」を使用します。
+各ボタンは対応は下記の通りです:
+|ボタン|コード|PC Remoconでの機能|
+|---|---|---|
+|OFF|82 6d be 41|電源オフ|
+|お気に入り|82 6d bd 42||
+|常夜灯|82 6d bc 43|電源ボタン長押し(約12秒)|
+|-|82 6d bb 44||
+|+|82 6d ba 45||
+|全灯|82 6d a6 59|電源オン|
+
+※ ONボタンは最後に押したボタンによりコードが異なる (お気に入り or 全灯)
 
 ## 主要部品
 
@@ -29,30 +42,30 @@ PICマイコン(PIC16F18424)を使った赤外線リモコン解析ツールで�
 |---|---|---|---|
 |PICマイコン|[PIC16F18424](https://akizukidenshi.com/catalog/g/g116267/)|Microchip||
 |赤外線リモコン受信モジュール|[GP1UXC41QS](https://akizukidenshi.com/catalog/g/g106487/)|シャープ||
-|FT234X 超小型USBシリアル変換モジュール|[AE-FT234X](https://akizukidenshi.com/catalog/g/g108461/)|秋月電子通商|電源供給兼用|
-|圧電スピーカー|[PKM13EPYH4000-A0](https://akizukidenshi.com/catalog/g/g104118/)|村田製作所|オプション|
+|2回路入フォトカプラー|[PS2501-2X](https://akizukidenshi.com/catalog/g/g130310/)|Isocom Components||
+|圧電スピーカー|[PKM13EPYH4000-A0](https://akizukidenshi.com/catalog/g/g104118/)|村田製作所||
 
 + 主要部品はすべて[秋月電子通商](https://akizukidenshi.com)で入手可能です(2025/07/21現在)。型番のリンクは秋月電子通商の商品ページへのリンクです
-+ その他、基板、ICソケット、コンデンサー、抵抗、ヘッダーピンが必要です
++ その他、基板、LED、ICソケット、コンデンサー、抵抗、ヘッダーピンが必要です
 
 ## ピン割り当て
 
-|ピン番号|ピン名|ピン機能|接続先|
-|---|---|---|---|
-|1|VDD|VDD||
-|2|RA5|NCO1OUT|圧電スピーカー|
-|3|RA4|RX1|USBシリアル変換モジュール|
-|4|MCLR#/RA3|MCLR#|MPLAB Snap|
-|5|RC5|||
-|6|RC4|||
-|7|RC3|||
-|8|RC2|TX1/CK1|USBシリアル変換モジュール|
-|9|RC1|SMT1SIG|赤外線リモコン受信モジュール|
-|10|RC0|||
-|11|RA2|||
-|12|RA1/ICSPCLK|ICSPCLK|MPLAB Snap|
-|13|RA0/ICSPDAT|ICSPDAT|MPLAB Snap|
-|14|VSS|VSS||
+|ピン番号|ピン名|ピン機能|接続先||
+|---|---|---|---|---|
+|1|VDD|VDD|||
+|2|RA5|NCO1OUT|圧電スピーカー||
+|3|RA4||||
+|4|MCLR#/RA3|MCLR#|MPLAB Snap||
+|5|RC5||||
+|6|RC4||||
+|7|RC3|RC3|LED||
+|8|RC2||||
+|9|RC1|SMT1SIG|赤外線リモコン受信モジュール||
+|10|RC0|RC0|フォトカプラ|入力: PWR LED|
+|11|RA2|RA2|フォトカプラ|出力: PWR SW|
+|12|RA1/ICSPCLK|ICSPCLK|MPLAB Snap||
+|13|RA0/ICSPDAT|ICSPDAT|MPLAB Snap||
+|14|VSS|VSS|||
 
 ## 参考回路図
 
